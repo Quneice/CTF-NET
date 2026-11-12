@@ -1,0 +1,20 @@
+version: 1
+name: dns_lookup
+enabled: true
+command: nslookup
+args: ["-timeout=10"]
+short_description: DNS 查询（A/CNAME 等记录）
+description: |
+  用 nslookup 查询域名的 DNS 记录（默认 A 记录），用于子域名/内网域名解析侦察。
+  仅用于授权目标。
+agents: [worker]
+timeout_seconds: 30
+parameters:
+  - name: domain
+    type: string
+    required: true
+    description: 要查询的域名（如 www.example.com）
+  - name: record_type
+    type: string
+    flag: "-type={value}"
+    description: 记录类型（A/AAAA/CNAME/MX/NS/TXT，默认 A）

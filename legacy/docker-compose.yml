@@ -1,0 +1,31 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.app
+    container_name: ctf-toolbox-app
+    ports:
+      - "8000:8000"
+    environment:
+      CTF_EXECUTOR_BACKEND: docker
+      CTF_DOCKER_IMAGE: ctf-toolbox:latest
+      CTF_DOCKER_NETWORK: none
+      CTF_DOCKER_DATA_VOLUME: ctf-data
+      CTF_DATA_DIR: /app/data
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ctf-data:/app/data
+    depends_on:
+      - sandbox
+    restart: unless-stopped
+
+  # build-only：仅用于构建沙箱镜像，不常驻运行
+  sandbox:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ctf-toolbox:latest
+    entrypoint: ["/bin/true"]
+
+volumes:
+  ctf-data:

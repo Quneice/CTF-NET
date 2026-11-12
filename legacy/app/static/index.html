@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CTF Toolbox</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><span class="brand-dot"></span>CTF Toolbox</div>
+  <input id="search" class="search" type="search" placeholder="搜索工具（名称 / 描述）…" autocomplete="off">
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <nav id="categories" class="categories"></nav>
+    <div id="tool-list" class="tool-list"></div>
+  </aside>
+
+  <main class="main">
+    <div id="empty" class="empty">
+      <div class="empty-title">选择一个工具开始</div>
+      <div class="empty-sub">从左侧列表挑选工具，参数表单会根据工具声明自动生成</div>
+    </div>
+    <section id="tool-panel" class="tool-panel hidden"></section>
+  </main>
+</div>
+
+<script type="module" src="/js/app.js"></script>
+</body>
+</html>

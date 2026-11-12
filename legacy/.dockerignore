@@ -1,0 +1,10 @@
+# 构建上下文排除项：避免把项目源码/数据/缓存卷进镜像
+__pycache__/
+*.py[cod]
+*.pyo
+.git/
+.venv/
+venv/
+data/
+*.md
+.env

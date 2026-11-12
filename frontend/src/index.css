@@ -1,0 +1,126 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 全局基础样式 */
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  @apply bg-slate-50 text-slate-900 antialiased;
+}
+
+/* 暗色模式：由 <html class="dark"> 触发 */
+.dark body {
+  @apply bg-slate-950 text-slate-100;
+}
+
+/* 细滚动条，适配工具面板 */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(148 163 184 / 0.4) transparent;
+}
+
+/* Markdown 输出样式（轻量，覆盖常见块级/行内元素） */
+.markdown-body h1 { font-size: 1.4em; font-weight: 700; margin: 0.5em 0; }
+.markdown-body h2 { font-size: 1.2em; font-weight: 600; margin: 0.5em 0; }
+.markdown-body h3 { font-size: 1.1em; font-weight: 600; margin: 0.4em 0; }
+.markdown-body h4 { font-weight: 600; margin: 0.3em 0; }
+.markdown-body h5 { font-weight: 600; margin: 0.25em 0; font-size: 1em; }
+.markdown-body h6 { font-weight: 600; margin: 0.25em 0; font-size: 0.9em; color: #64748b; }
+.markdown-body table {
+  border-collapse: collapse;
+  margin: 0.5em 0;
+  font-size: 0.92em;
+  max-width: 100%;
+  display: block;
+  overflow-x: auto;
+}
+.markdown-body th,
+.markdown-body td {
+  border: 1px solid rgb(148 163 184 / 0.35);
+  padding: 4px 10px;
+  text-align: left;
+  white-space: normal;
+}
+.markdown-body th { background: rgb(148 163 184 / 0.15); font-weight: 600; }
+.markdown-body tr:nth-child(even) td { background: rgb(148 163 184 / 0.06); }
+.markdown-body p { margin: 0.4em 0; }
+.markdown-body ul { list-style: disc; padding-left: 1.5em; margin: 0.4em 0; }
+.markdown-body ol { list-style: decimal; padding-left: 1.5em; margin: 0.4em 0; }
+.markdown-body blockquote {
+  border-left: 3px solid #6366f1;
+  padding-left: 0.8em;
+  opacity: 0.85;
+  margin: 0.4em 0;
+}
+.markdown-body hr { border: none; border-top: 1px solid rgb(148 163 184 / 0.3); margin: 0.8em 0; }
+.markdown-body code {
+  background: rgb(99 102 241 / 0.12);
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.9em;
+}
+.markdown-body pre {
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 0.8em;
+  border-radius: 8px;
+  overflow: auto;
+  margin: 0.5em 0;
+}
+.markdown-body pre code { background: transparent; padding: 0; color: inherit; }
+.markdown-body a { color: #6366f1; text-decoration: underline; }
+.markdown-body strong { font-weight: 700; }
+.markdown-body .md-img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  border: 1px solid rgb(148 163 184 / 0.25);
+  margin: 0.4em 0;
+  display: block;
+}
+.markdown-body .md-img-loading,
+.markdown-body .md-img-fail {
+  display: inline-block;
+  font-size: 0.85em;
+  padding: 0.2em 0.6em;
+  border-radius: 6px;
+  margin: 0.3em 0;
+  background: rgb(148 163 184 / 0.12);
+  color: #64748b;
+}
+.markdown-body .md-img-fail { color: #dc2626; }
+
+/* ---------------------------------------------------------------------------
+ * 设计令牌(design-system.md §2.8,批 1 落地):语义变量,明暗两套。
+ * 组件只准消费 --ct-* 语义令牌;旧原子类按批次迁移。
+ * ------------------------------------------------------------------------- */
+:root {
+  --ct-font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', sans-serif;
+  --ct-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Cascadia Mono', monospace;
+  --ct-brand:#4f46e5; --ct-brand-hover:#4338ca; --ct-brand-subtle:#eef2ff;
+  --ct-surface:#f8fafc; --ct-surface-raised:#ffffff; --ct-surface-hover:#f1f5f9;
+  --ct-line:#e2e8f0; --ct-line-strong:#cbd5e1;
+  --ct-ink-1:#0f172a; --ct-ink-2:#475569; --ct-ink-3:#64748b; --ct-ink-inverse:#ffffff;
+  --ct-ok:#166534;      --ct-ok-bg:#dcfce7;      --ct-ok-line:#bbf7d0;
+  --ct-warn:#92400e;    --ct-warn-bg:#fef3c7;    --ct-warn-line:#fde68a;
+  --ct-danger:#991b1b;  --ct-danger-bg:#fee2e2;  --ct-danger-line:#fecaca;
+  --ct-muted:#334155;   --ct-muted-bg:#e2e8f0;   --ct-muted-line:#cbd5e1;
+}
+.dark {
+  --ct-brand:#818cf8; --ct-brand-hover:#a5b4fc; --ct-brand-subtle:rgb(99 102 241 / .15);
+  --ct-surface:#020617; --ct-surface-raised:#0f172a; --ct-surface-hover:rgb(148 163 184 / .08);
+  --ct-line:#1e293b; --ct-line-strong:#334155;
+  --ct-ink-1:#f1f5f9; --ct-ink-2:#94a3b8; --ct-ink-3:#64748b; --ct-ink-inverse:#0f172a;
+  --ct-ok:#86efac;      --ct-ok-bg:rgb(22 101 52 / .35);  --ct-ok-line:rgb(22 163 74 / .4);
+  --ct-warn:#fcd34d;    --ct-warn-bg:rgb(146 64 14 / .35); --ct-warn-line:rgb(217 119 6 / .4);
+  --ct-danger:#fca5a5;  --ct-danger-bg:rgb(153 27 27 / .35); --ct-danger-line:rgb(220 38 38 / .4);
+  --ct-muted:#cbd5e1;   --ct-muted-bg:rgb(51 65 85 / .5);   --ct-muted-line:#475569;
+}
+

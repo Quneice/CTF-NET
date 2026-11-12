@@ -1,0 +1,37 @@
+# ===== 构建产物 =====
+build/
+*.exe
+*.test
+*.out
+
+# ===== 运行时数据(仅项目根;含 config.json 敏感配置、SQLite 库、上传/工件)=====
+# 注意:必须锚定根目录,internal/tools/pentest/data/ 是 go:embed 构建数据,不能排除
+/data/
+
+# ===== 运行垃圾/生成物 =====
+__pycache__/
+*.pyc
+*.swp
+*.log
+
+# ===== 备份(体积巨大,仅本地保留)=====
+backups/
+
+# ===== 第三方运行时依赖(whisper 模型 ~608MB、tesseract 库)=====
+thirdparty/
+
+# ===== 模型文件(如根目录 ggml-tiny-q5_1.bin,本地运行 ASR 使用)=====
+*.bin
+
+# ===== 前端依赖 =====
+frontend/node_modules/
+
+# ===== IDE / 工具目录 =====
+.screenshots/
+.trae/
+.idea/
+.vscode/
+
+# ===== 系统文件 =====
+Thumbs.db
+.DS_Store

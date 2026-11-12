@@ -1,0 +1,17 @@
+version: 1
+name: http_headers
+enabled: true
+command: curl
+args: ["--head", "--silent", "--show-error", "--max-time", "30", "--proto", "=http,https"]
+short_description: 查看目标 HTTP 响应头
+description: |
+  用 curl 发送 HEAD 请求查看目标 URL 的响应头（Server/X-Powered-By/安全头等），
+  用于识别 Web 服务器、框架版本与安全配置缺失。仅用于授权目标。
+agents: [worker]
+timeout_seconds: 45
+parameters:
+  - name: url
+    type: string
+    flag: --url
+    required: true
+    description: 目标完整 URL（含协议，如 http://10.0.0.5:8080/）

@@ -1,0 +1,15 @@
+# CTF 解题常用 Python 库
+pwntools
+pycryptodome
+gmpy2
+z3-solver
+sympy
+numpy
+requests
+beautifulsoup4
+lxml
+pillow
+scapy
+
+# 可选（体积较大，默认不装）：
+# angr
