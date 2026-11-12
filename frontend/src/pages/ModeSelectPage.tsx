@@ -7,7 +7,7 @@ import { useModeStore } from '@/stores/useModeStore';
 
 /**
  * 模式选择页（/mode）：每次启动应用先落到本页。
- * 两张卡片分别对应「CTF 模式 / 渗透测试模式」，点击进入首页。
+ * 三张卡片分别对应「CTF 模式 / 渗透测试模式 / 模型安全模式」，点击进入首页。
  */
 export default function ModeSelectPage() {
   const setMode = useModeStore((s) => s.setMode);
@@ -24,13 +24,13 @@ export default function ModeSelectPage() {
 
   return (
     <div className="flex h-screen w-full items-center justify-center bg-slate-50 p-6 dark:bg-slate-950">
-      <div className="w-full max-w-3xl">
+      <div className="w-full max-w-5xl">
         <header className="text-center">
           <h1 className="text-3xl font-semibold text-slate-800 dark:text-slate-100">CTF-NET</h1>
           <p className="mt-2 text-slate-500 dark:text-slate-400">选择本次使用的工作模式</p>
         </header>
 
-        <div className="mt-10 grid gap-6 sm:grid-cols-2">
+        <div className="mt-10 grid gap-6 sm:grid-cols-3">
           {(Object.keys(MODE_CONFIG) as AppMode[]).map((mode) => {
             const info = MODE_CONFIG[mode];
             const Icon = getIcon(info.icon);

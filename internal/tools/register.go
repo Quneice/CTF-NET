@@ -3,6 +3,7 @@ package tools
 
 import (
 	_ "ctfnet/internal/tools/ai"
+	_ "ctfnet/internal/tools/aisec"
 	_ "ctfnet/internal/tools/crypto"
 	_ "ctfnet/internal/tools/data"
 	_ "ctfnet/internal/tools/misc"

@@ -228,4 +228,10 @@ export const categories: CategoryNode[] = [
   // AI 渗透：一级分类（自动化渗透任务 + 对话式渗透），
   // 与 pentest.* 同级的独立顶级节点，两种模式均可见。
   { id: 'ai.pentest', name: 'AI 渗透', icon: 'Bot', description: 'AI 自动化渗透与对话式渗透测试' },
+  // 模型安全：大模型安全测试域（越狱 / 提示注入 / 投毒 / 后门），
+  // 与 pentest.* 同级顶级节点，模型安全模式可见。
+  { id: 'aisec.jailbreak', name: '越狱攻击', icon: 'Bomb', description: '模型安全·越狱与安全边界测试' },
+  { id: 'aisec.injection', name: '提示注入', icon: 'MessageSquareText', description: '模型安全·提示注入与指令劫持' },
+  { id: 'aisec.poison', name: '数据投毒', icon: 'Database', description: '模型安全·训练数据投毒筛查' },
+  { id: 'aisec.backdoor', name: '模型后门', icon: 'HardDrive', description: '模型安全·模型文件后门与恶意载荷检测' },
 ];

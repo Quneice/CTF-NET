@@ -5,11 +5,11 @@ import { categoryMap, getToolsUnderCategory } from './index';
 /**
  * 模式配置（单一数据源）。
  *
- * 「CTF 模式 / 渗透测试模式」通过 categoryRoots 声明各自可见的一级分类；
+ * 「CTF 模式 / 渗透测试模式 / 模型安全模式」通过 categoryRoots 声明各自可见的一级分类；
  * 分类可被多个模式共享（如 web / codec / osint 同时属于两种模式），
  * 调整归属只改本文件的 categoryRoots。
  */
-export type AppMode = 'ctf' | 'pentest';
+export type AppMode = 'ctf' | 'pentest' | 'modelsec';
 
 export interface ModeInfo {
   /** 模式显示名 */
@@ -60,6 +60,19 @@ export const MODE_CONFIG: Record<AppMode, ModeInfo> = {
       'web',
       'codec',
       'osint',
+    ],
+  },
+  modelsec: {
+    label: '模型安全',
+    icon: 'ShieldCheck',
+    description: '大模型安全测试：越狱攻击、提示注入、训练数据投毒、模型后门检测，共享编码工具',
+    // 模型安全域 4 个顶级分类 + 共享的编码工具
+    categoryRoots: [
+      'aisec.jailbreak',
+      'aisec.injection',
+      'aisec.poison',
+      'aisec.backdoor',
+      'codec',
     ],
   },
 };

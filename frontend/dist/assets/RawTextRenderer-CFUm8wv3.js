@@ -1,0 +1,1 @@
+import{j as r}from"./index-CSa5wz5X.js";import{T as s}from"./TextResult-JLAGoMbZ.js";function i({data:t}){const e=typeof t=="string"?t:JSON.stringify(t,null,2);return r.jsx(s,{text:e,filename:"result.txt"})}export{i as default};

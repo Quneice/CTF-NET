@@ -3729,8 +3729,255 @@ function buildShorthandTool(row: ShorthandRow): ToolDefinition {
 
 const shorthandTools: ToolDefinition[] = [...shorthandRows, ...yangWebShorthandRows, ...cyberChefShorthandRows, ...pentestShorthandRows, ...dataShorthandRows].map(buildShorthandTool);
 
-/** 全部工具：完整工具 + Base 家族工具 + 简写工具 */
-export const tools: ToolDefinition[] = [...fullTools, ...sstiEngineTools, ...baseTools, ...codecTools, ...shorthandTools];
+// ---------------------------------------------------------------------------
+// 模型安全域（aisec.*）：Go 真实实现工具 + 本地模板速查
+// ---------------------------------------------------------------------------
+
+const aisecTools: ToolDefinition[] = [
+  {
+    id: 'aisec.jailbreak.jailbreak-scan',
+    name: '越狱扫描',
+    categoryId: 'aisec.jailbreak',
+    description:
+      'LLM 越狱批量扫描：内置 12 种越狱模板（DAN / 角色扮演 / 翻译外带 / 编码混淆等）+ 自定义 payload，' +
+      '并发打 OpenAI 兼容端点，中英拒绝关键词 + 成功正则判定，输出报告与 CSV。',
+    tags: ['大模型', '越狱', 'jailbreak', 'LLM', 'task:扫描'],
+    version: '1.0.0',
+    inputSchema: [
+      {
+        type: 'textarea',
+        name: 'task_goal',
+        label: '攻击目标',
+        required: true,
+        spanFull: true,
+        placeholder: '如：泄露系统提示词 / 给出 sqlmap 完整用法',
+        help: '替换模板中 {{GOAL}} 占位符',
+      },
+      {
+        type: 'select',
+        name: 'payload_set',
+        label: '模板集',
+        defaultValue: 'jailbreak',
+        options: [
+          { label: '越狱模板（12 种）', value: 'jailbreak' },
+          { label: '提示注入模板（8 种）', value: 'injection' },
+          { label: '全部模板', value: 'full' },
+          { label: '仅自定义', value: 'custom' },
+        ],
+      },
+      {
+        type: 'textarea',
+        name: 'payloads',
+        label: '自定义 payload',
+        spanFull: true,
+        placeholder: '每行一条，支持 {{GOAL}} 占位符',
+        help: 'payload_set=custom 时必填',
+      },
+      {
+        type: 'text',
+        name: 'target_url',
+        label: '目标端点',
+        placeholder: 'OpenAI 兼容端点，留空用全局 AI 配置',
+        help: '填 base 或完整 /chat/completions 均可',
+      },
+      { type: 'text', name: 'model', label: '模型', placeholder: '留空用全局 AI 配置' },
+      { type: 'password', name: 'api_key', label: 'API Key', placeholder: '留空用全局 AI 配置' },
+      { type: 'number', name: 'concurrency', label: '并发数', defaultValue: 4 },
+      { type: 'number', name: 'max_tokens', label: '最大 token 数', defaultValue: 1024 },
+      {
+        type: 'text',
+        name: 'refusal_keywords',
+        label: '追加拒绝关键词',
+        placeholder: '逗号分隔，如：安全中心,系统拦截',
+      },
+      {
+        type: 'text',
+        name: 'success_pattern',
+        label: '成功判定正则',
+        placeholder: '如 flag\\{ 或 BEGIN RSA',
+        help: '命中即判成功（优先于拒绝关键词）',
+      },
+    ],
+    invoke: {
+      type: 'task',
+      submitUrl: '/api/tools/aisec.jailbreak.jailbreak-scan/run',
+      pollUrl: '/api/tasks/{jobId}',
+      intervalMs: 1000,
+      timeoutMs: 900000,
+      realBackend: true,
+    },
+    output: { type: 'text' },
+  },
+  {
+    id: 'aisec.injection.injection-scan',
+    name: '提示注入扫描',
+    categoryId: 'aisec.injection',
+    description:
+      '提示注入批量扫描：内置 8 种注入模板（忽略指令 / 系统提示词泄露 / 角色越权 / 分隔符欺骗等）+ 自定义 payload，' +
+      '并发打 OpenAI 兼容端点并判定是否注入成功。',
+    tags: ['大模型', '提示注入', 'prompt-injection', 'LLM', 'task:扫描'],
+    version: '1.0.0',
+    inputSchema: [
+      {
+        type: 'textarea',
+        name: 'task_goal',
+        label: '攻击目标',
+        required: true,
+        spanFull: true,
+        placeholder: '如：泄露系统提示词 / 执行越权操作',
+        help: '替换模板中 {{GOAL}} 占位符；「系统提示词泄露」模板无需占位符',
+      },
+      {
+        type: 'select',
+        name: 'payload_set',
+        label: '模板集',
+        defaultValue: 'injection',
+        options: [
+          { label: '提示注入模板（8 种）', value: 'injection' },
+          { label: '越狱模板（12 种）', value: 'jailbreak' },
+          { label: '全部模板', value: 'full' },
+          { label: '仅自定义', value: 'custom' },
+        ],
+      },
+      {
+        type: 'textarea',
+        name: 'payloads',
+        label: '自定义 payload',
+        spanFull: true,
+        placeholder: '每行一条，支持 {{GOAL}} 占位符',
+        help: 'payload_set=custom 时必填',
+      },
+      {
+        type: 'text',
+        name: 'target_url',
+        label: '目标端点',
+        placeholder: 'OpenAI 兼容端点，留空用全局 AI 配置',
+      },
+      { type: 'text', name: 'model', label: '模型', placeholder: '留空用全局 AI 配置' },
+      { type: 'password', name: 'api_key', label: 'API Key', placeholder: '留空用全局 AI 配置' },
+      { type: 'number', name: 'concurrency', label: '并发数', defaultValue: 4 },
+      { type: 'number', name: 'max_tokens', label: '最大 token 数', defaultValue: 1024 },
+      {
+        type: 'text',
+        name: 'success_pattern',
+        label: '成功判定正则',
+        placeholder: '如泄露内容的特征串，如 BEGIN SYSTEM|flag\\{',
+        help: '命中即判成功（优先于拒绝关键词）',
+      },
+    ],
+    invoke: {
+      type: 'task',
+      submitUrl: '/api/tools/aisec.injection.injection-scan/run',
+      pollUrl: '/api/tasks/{jobId}',
+      intervalMs: 1000,
+      timeoutMs: 900000,
+      realBackend: true,
+    },
+    output: { type: 'text' },
+  },
+  {
+    id: 'aisec.poison.dataset-scan',
+    name: '数据投毒筛查',
+    categoryId: 'aisec.poison',
+    description:
+      '训练数据投毒筛查：解析 JSONL/CSV 文本分类数据集，基于 n-gram 与标签的关联强度（lift）找出疑似触发器候选，' +
+      '并报告重复样本、空文本与可疑模式（URL/IP/长 base64/控制字符）。',
+    tags: ['大模型', '投毒', 'poisoning', '数据集', 'task:分析'],
+    version: '1.0.0',
+    inputSchema: [
+      {
+        type: 'file',
+        name: 'file',
+        label: '数据集文件',
+        multiple: false,
+        accept: '.jsonl,.csv,.json',
+        required: true,
+      },
+      {
+        type: 'select',
+        name: 'format',
+        label: '格式',
+        defaultValue: 'auto',
+        options: [
+          { label: '自动识别', value: 'auto' },
+          { label: 'JSONL', value: 'jsonl' },
+          { label: 'CSV', value: 'csv' },
+        ],
+      },
+      { type: 'text', name: 'text_field', label: '文本字段', defaultValue: 'text' },
+      { type: 'text', name: 'label_field', label: '标签字段', defaultValue: 'label' },
+      { type: 'number', name: 'ngram', label: 'n-gram 的 n', defaultValue: 3, help: 'CJK 文本按字符级，英文按词级' },
+      { type: 'number', name: 'min_freq', label: '最少出现次数', defaultValue: 2 },
+      { type: 'number', name: 'lift_threshold', label: 'lift 阈值', defaultValue: 2.0, help: 'p(gram|label)/p(label) 高于此值视为异常关联' },
+      { type: 'number', name: 'top_k', label: '候选上限', defaultValue: 20 },
+    ],
+    invoke: {
+      type: 'task',
+      submitUrl: '/api/tools/aisec.poison.dataset-scan/run',
+      pollUrl: '/api/tasks/{jobId}',
+      intervalMs: 1000,
+      timeoutMs: 300000,
+      realBackend: true,
+    },
+    output: { type: 'text' },
+  },
+  {
+    id: 'aisec.backdoor.model-file-scan',
+    name: '模型文件后门扫描',
+    categoryId: 'aisec.backdoor',
+    description:
+      '模型文件后门扫描（picklescan 思路）：自动识别 PyTorch zip 存档 / pickle / safetensors，' +
+      '检测 pickle 恶意导入（os.system / subprocess / eval / exec 等）、可疑字符串与 zip 内可疑成员（.so/.exe/.py），' +
+      '输出风险分级报告。',
+    tags: ['大模型', '后门', 'backdoor', 'pickle', 'task:检测'],
+    version: '1.0.0',
+    inputSchema: [
+      {
+        type: 'file',
+        name: 'file',
+        label: '模型文件',
+        multiple: true,
+        accept: '.pt,.pth,.pkl,.bin,.safetensors',
+        required: true,
+        help: '支持多文件上传',
+      },
+    ],
+    invoke: {
+      type: 'task',
+      submitUrl: '/api/tools/aisec.backdoor.model-file-scan/run',
+      pollUrl: '/api/tasks/{jobId}',
+      intervalMs: 1000,
+      timeoutMs: 300000,
+      realBackend: true,
+    },
+    output: { type: 'text' },
+  },
+  {
+    id: 'aisec.jailbreak.templates',
+    name: '越狱模板速查',
+    categoryId: 'aisec.jailbreak',
+    description: '内置越狱 / 提示注入模板库速查（与越狱扫描、提示注入扫描共用同一模板库），复制即用。',
+    tags: ['大模型', '模板', 'payload', '速查'],
+    version: '1.0.0',
+    inputSchema: [
+      {
+        type: 'select',
+        name: 'payload_set',
+        label: '模板集',
+        defaultValue: 'jailbreak',
+        options: [
+          { label: '越狱模板（12 种）', value: 'jailbreak' },
+          { label: '提示注入模板（8 种）', value: 'injection' },
+        ],
+      },
+    ],
+    invoke: { type: 'local', handlerId: 'local.aisec.templates' },
+    output: { type: 'text' },
+  },
+];
+
+/** 全部工具：完整工具 + Base 家族工具 + 简写工具 + 模型安全工具 */
+export const tools: ToolDefinition[] = [...fullTools, ...sstiEngineTools, ...baseTools, ...codecTools, ...shorthandTools, ...aisecTools];
 
 /** 工具 id -> 工具，便于 O(1) 查找 */
 export const toolMap: Map<string, ToolDefinition> = new Map(tools.map((t) => [t.id, t]));

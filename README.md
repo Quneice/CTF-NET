@@ -1,6 +1,6 @@
 # CTF-NET
 
-一体化 CTF 解题 / 渗透测试工具箱桌面应用。**Wails v2 + Go + React** 架构:Go 后端提供工具注册表、任务队列、交互会话与多套知识库(SQLite),React 前端(Vite)通过 Wails 绑定调用,无 Wails 环境时自动回退本地 mock 便于纯浏览器开发。
+一体化 CTF 解题 / 渗透测试 / 大模型安全测试工具箱桌面应用。**Wails v2 + Go + React** 架构:Go 后端提供工具注册表、任务队列、交互会话与多套知识库(SQLite),React 前端(Vite)通过 Wails 绑定调用,无 Wails 环境时自动回退本地 mock 便于纯浏览器开发。
 
 > 仅用于授权 CTF / 安全测试环境。
 >
@@ -8,7 +8,8 @@
 
 ## 功能总览
 
-- **双模式工作台**:启动进入模式选择页——「CTF 模式」(Web/Crypto/Misc/Reverse/Pwn/取证/隐写等 14 个分类)与「渗透测试模式」(侦察 / 扫描 / 漏洞 / 武器库 / 隧道 / 辅助),共享 Web、编码、OSINT 工具。
+- **三模式工作台**:启动进入模式选择页——「CTF 模式」(Web/Crypto/Misc/Reverse/Pwn/取证/隐写等 14 个分类)、「渗透测试模式」(侦察 / 扫描 / 漏洞 / 武器库 / 隧道 / 辅助)与「模型安全模式」(越狱攻击 / 提示注入 / 数据投毒 / 模型后门),共享 Web、编码、OSINT 工具。
+- **模型安全测试**(`internal/tools/aisec`):LLM 越狱/提示注入批量扫描(内置 20 种模板库 + 自定义 payload,OpenAI 兼容端点,中英拒绝判定 + 成功正则)、模型文件后门扫描(pickle/zip/safetensors 恶意导入检测)、训练数据投毒筛查(n-gram lift 触发器候选 + 可疑模式统计)。
 - **工具系统**:后端 Go 注册表 47 个真实工具(网络扫描、指纹、子域、AI、OCR/ASR 等),统一任务队列(异步 Job + `task:done` 事件推送)、交互会话(SSH/Shell 全双工)、产物下载;前端 600+ 工具目录中其余轻量工具由前端 local 处理器离线完成。
 - **AI 渗透引擎**(`internal/aiagent`):LLM 规划者+执行者双角色 agent,意图队列编排、内置工具调用、YAML 配方、角色目标分解/约束提取、代理环境注入、意图级取消与人工舵向;智谱 GLM/DeepSeek/OpenAI 兼容 API,全局代理生效;漏洞上报强制可复现证据,状态落盘 task.json 可复盘。
 - **AI 对话**:对话引擎(ARTEX-1.0.4 同款 norma 内核:transcript JSONL 续聊 + captureRun 事件合并),流式逐 token 推送、思考过程实时弱化展示、工具动作可见、回复中可打断补充;支持 DeepSeek 思考模式(reasoning_content 原样回传)。
@@ -40,6 +41,9 @@ CTF-NET/
     projects/ wiki/ vulnlib/  # 项目库 / 红队 Wiki / 漏洞库(SQLite + 内置种子数据)
     tools/                    # 工具注册表(register.go 汇总,各包 init() 自注册)
       ai/                     # ai.pentest:task(AI 自动化渗透)、chat(AI 对话)
+      aisec/                  # 模型安全:jailbreak-scan / injection-scan(越狱/注入批量扫描,
+                              #   共享 LLM 引擎+模板库)、model-file-scan(pickle 后门扫描)、
+                              #   dataset-scan(训练数据投毒筛查)
       crypto/                 # aes_cbc_bitflip、base64、rot13、beast
       misc/                   # whitespace_codec(Snowfall/解释器)、hash、file_checksum、wechat_dat
       data/                   # audio_asr、image_ocr/qrcode/metadata/batch、packet_crawler、table_merge
@@ -52,7 +56,7 @@ CTF-NET/
       web/                    # jndi(原生 Go SSH 一键利用)、ssti_jinja2 + 19 引擎占位、http_headers
                               #   + go:embed:JNDI 载荷模板
   frontend/                   # React + Vite + Tailwind
-    src/mock/                 # 前端事实源:600+ 工具目录、双模式分类树、模式配置
+    src/mock/                 # 前端事实源:600+ 工具目录、三模式分类树、模式配置
     src/adapters/             # 适配层:Wails 绑定 / 本地 mock 回退
     src/pages/                # 模式选择、首页、分类、工具、项目库、AI 对话、
                               #   AI 工作台 4 页(仪表盘/任务/发现/资产)、设置
@@ -66,12 +70,16 @@ CTF-NET/
 - 前端工具执行分三种形态:**local**(前端离线处理器,如编解码)、**后端任务**(`RunTool`/`GetJob` 走 Go 注册表,产物经 `task:done` 事件即时结算)、**占位符**(目录已建、后端未接,页面展示占位提示)。
 - 纯浏览器 `npm run dev` 可独立开发 UI(无 `window.go` 时适配层自动走 mock)。
 
-## 后端工具一览(47 个)
+## 后端工具一览(51 个)
 
 按注册分类(工具 ID = `分类.名称`):
 
 | 分类 | 工具 | 说明 |
 | --- | --- | --- |
+| aisec.jailbreak | `jailbreak-scan` | LLM 越狱批量扫描:内置 12 种越狱模板(DAN/角色扮演/祖母故事/翻译外带/编码混淆等)+ 自定义 payload,并发打 OpenAI 兼容端点(全局 AI 配置 + 全局代理联动,参数可覆盖),中英拒绝关键词 + 成功正则判定(成功正则优先于拒绝词),输出报告 + CSV 产物 + 结构化结果 |
+| aisec.injection | `injection-scan` | 提示注入批量扫描:内置 8 种注入模板(忽略指令/系统提示词泄露/角色越权/分隔符欺骗/多语言混淆/递归注入等),与越狱扫描共享引擎 |
+| aisec.backdoor | `model-file-scan` | 模型文件后门扫描(picklescan 思路):自动识别 PyTorch zip 存档/pickle/safetensors,线性扫描 pickle 字节流收集 GLOBAL 导入与字符串字面量,检测恶意函数对(os.system/subprocess/eval/exec/ctypes 等)、可疑字符串(URL/IP/长 base64/shell 命令)与 zip 内可疑成员(.so/.exe/.py 等),输出风险分级报告;支持多文件 |
+| aisec.poison | `dataset-scan` | 训练数据投毒筛查(启发式):解析 JSONL/CSV 文本分类数据集,CJK 字符级/英文词级 n-gram 与标签的关联强度(lift/类内占比)找出疑似触发器候选,并报告重复样本、空文本与可疑模式(URL/IP/长 base64/控制字符) |
 | ai.pentest | `task` | AI 自动化渗透:LLM 规划者+执行者双角色,意图队列编排 + 内置工具调用 + YAML 配方 + goals 角色目标分解/约束提取 + 代理环境注入子进程 + 意图级取消与人工舵向;漏洞上报强制可复现证据;状态落盘 task.json 可复盘 |
 | ai.pentest | `chat` | 对话式渗透(见「AI 对话」):流式逐 token 推送、按模型轮次分段展示、工具动作实时可见、回复中可打断补充;单轮默认 48 步工具往返、25 分钟墙钟,到预算时注入收尾提示 |
 | pentest.scan | `port-scan` | 端口/服务扫描(外部 fscan 2.2.2:存活探测 + 端口扫描 + Web POC + 弱口令检测;路径在设置页配置,全局代理自动映射 -socks5/-proxy) |
