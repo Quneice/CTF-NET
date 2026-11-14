@@ -1,0 +1,1 @@
+import{j as r}from"./index-DRUB8tnW.js";import{T as s}from"./TextResult-CT0SaIRA.js";function i({data:e}){const t=typeof e=="string"?e:JSON.stringify(e,null,2);return r.jsx(s,{text:t,filename:"result.hex"})}export{i as default};
