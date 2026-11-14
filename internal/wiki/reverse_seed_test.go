@@ -2,10 +2,10 @@ package wiki
 
 import "testing"
 
-// 逆向 Wiki 内置种子完整性:8 分类、总数 35、每类条数、无空字段、无重复标题。
+// 逆向 Wiki 内置种子完整性:8 分类、总数 44、每类条数、无空字段、无重复标题。
 var reverseCategoryCounts = map[string]int{
 	"algo": 4, "tools": 4, "antidebug": 5, "unpack": 3,
-	"formats": 4, "functions": 12, "ascii": 2, "notes": 1,
+	"formats": 4, "functions": 21, "ascii": 2, "notes": 1,
 }
 
 func TestReverseBuiltinSeedCounts(t *testing.T) {
@@ -23,8 +23,8 @@ func TestReverseBuiltinSeedCounts(t *testing.T) {
 		counts[e.Category]++
 		total++
 	}
-	if total != 35 {
-		t.Fatalf("总条数 = %d, 期望 35", total)
+	if total != 44 {
+		t.Fatalf("总条数 = %d, 期望 44", total)
 	}
 	for cat, want := range reverseCategoryCounts {
 		if counts[cat] != want {

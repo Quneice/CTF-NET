@@ -1,6 +1,6 @@
 package wiki
 
-// ReverseBuiltinSeed 逆向 Wiki 内置速查种子(8 分类 35 条)。
+// ReverseBuiltinSeed 逆向 Wiki 内置速查种子(8 分类 44 条)。
 //
 // 分类 id 与前端 frontend/src/mock/reverseWiki.ts 的 REVERSE_WIKI_SEED 一一对应,
 // 内容两侧保持一致(桌面端由 main.go 空表时灌入 reverse_wiki.db;
@@ -257,6 +257,62 @@ var ReverseBuiltinSeed = []SeedEntry{
 - popen(cmd, "r"/"w"):起 shell 并建管道读输出;fgets 读结果。
 - execve(path, argv, envp) 直接替换进程映像(不返回);execve("/bin/sh",0,0) 是 orw/ret2syscall 目标。
 - 认法:命令字符串常量("/bin/sh"、"curl"、"chmod")与这些函数同现;字符串若是拼接格式串则先追拼接逻辑。`},
+	{Category: "functions", Title: "__report_rangecheckfailure", Content: `## MSVC 运行库:越界检查上报
+
+- 一旦检测到越界(GS/RTC 缓冲区检查),就调用它触发运行时错误并终止程序(类似 assertion 失败),而不是悄悄写坏内存。
+- 前缀 **j_** 是链接器增量链接的跳板(jump thunk):j___report_rangecheckfailure 只是跳到真实函数的一层 jmp;常见 j_、j_j_ 嵌套,双击跟到无前缀实体即可。
+- 反编译里大量出现 = 开启 /GS 或 Debug 检查;patch 思路:让检查条件永假或 NOP 掉调用,程序即"默默越界"继续跑(题解常用)。
+- 同族:__report_gsfailure(cookie 校验失败)、__fastfail(intrinsic,更底层)。`},
+	{Category: "functions", Title: "_RTC_CheckEsp / _RTC_CheckStackVars", Content: `## VC Debug 运行时检查(/RTC1)
+
+- Debug 编译插入的检查:_RTC_CheckEsp 每次调用后核对 ESP 平衡(调用约定错误/栈破坏报警);_RTC_CheckStackVars 检查局部数组越界(配合栈哨兵 0xCC/0xFDFDFDFD 填充)。
+- 伪代码里成片出现 = Debug 版二进制,Release 无;这些调用不是业务逻辑,直接忽略。
+- 相关魔数:0xCC(int3 填充)、0xFDFDFDFD(栈边界)、0xCDCDCDCD(未初始化堆)、0xDDDDDDDD(已释放堆)、0xFEEEFEEE(堆尾)——调内存时看到即知状态。`},
+	{Category: "functions", Title: "__chkstk / __alloca_probe", Content: `## 栈探测(stack probing)
+
+- 局部变量合计 ≥ 一页(0x1000)时编译器在序言插入:x64 叫 __chkstk,32 位叫 _alloca_probe;逐页触探保证栈可增长。
+- 含义:该函数有大数组/大缓冲局部变量——大缓冲常是 flag/密文/输入区,重点看。
+- 它是机制性代码不是逻辑;VMP/壳也常借它,别当业务分析。alloca 变长栈分配也走这里。`},
+	{Category: "functions", Title: "__scrt_common_main_seh / _initterm", Content: `## CRT 启动链(定位 main 的路标)
+
+- 调用链:入口点 → __scrt_common_main_seh(或 mainCRTStartup)→ _initterm(执行 C++ 全局构造/静态初始化)→ invoke 用户 main。
+- 逆向找 main 最快路径:从 EP 跟 3-4 层,最后一个 _initterm 之后的 call 即 main。
+- _initterm 的函数表可枚举所有全局构造函数——**隐藏的初始化逻辑(密钥、反调试安装、解密)常藏在这里**,比 main 更早执行。
+- 安全初始化新版为 _initterm_e(带退出码);TLS 回调(__tls_cb_)比这一切更早,题里也爱藏。`},
+	{Category: "functions", Title: "__malloc_base / __free_base 与 _base 后缀", Content: `## UCRT 内部名
+
+- UCRT 里 malloc/free 的实现层真身:__malloc_base / __free_base;_base 后缀 = 内部实现层(导出外壳之下)。
+- 伪代码看到它们 = 普通堆分配/释放,无特殊含义;同理 printf 家族落在 __stdio_common_vfprintf(另有专条)。
+- MinGW/GCC 对应 __mingw_malloc / free 无 _base;老 MSVC 直接 malloc。
+- 认法价值:不用追进去,当 malloc/free 读即可。`},
+	{Category: "functions", Title: "LODWORD / HIDWORD / __ROL__ / __PAIR__ 宏", Content: `## IDA 伪代码宏速查
+
+- 取半:LODWORD(x)=低 32 位;HIDWORD(x)=高 32 位;SHIDWORD=符号扩展取高半;WORD1/BYTE2 等取第 n 字节(0 起)。
+- 循环移位:__ROL__(x,n)/__ROR__ 循环左/右移——**TEA/MD5/魔数变换高发**,看到先想加密算法。
+- 拼接:__PAIR__(high,low) 拼成 64 位;COERCE_* 是浮点/整数位重解释(memcpy 语义)。
+- 这些都不是函数调用,是 F5 对位运算的展示;直接还原成 C 位运算理解即可。`},
+	{Category: "functions", Title: "sub_ / dword_ / off_ 符号前缀约定", Content: `## 未命名符号速查
+
+- sub_XXXX 未识别的函数;loc_XXXX 未识别的代码地址;j_ 跳板。
+- dword_/qword_/word_/byte_ 按宽度命名的全局变量;unk_ 未知类型;stru_ 结构;asc_ 字符串。
+- off_ 指针(常是函数指针表/导入表项)——配合 GetProcAddress 条目,off_ 表逆向时逐项改名回 API 名。
+- 技巧:N 键改名后全文联动;先给 sub_ 按功能起名(如 sub_check_flag),伪代码可读性立刻翻倍;遇到 dword_ 优先看交叉引用(X)定含义。`},
+	{Category: "functions", Title: "动态调用形态(函数指针强转)", Content: `## GetProcAddress 后的直接调用
+
+- 伪代码形态:
+
+    v5 = GetProcAddress(hModule, "func");
+    ((void (__fastcall *)(_QWORD, _QWORD))v5)(a1, a2);
+
+- 意思:动态解析的 API 被强转成函数指针后直接调;真实身份由 LoadLibrary 的模块名 + GetProcAddress 的名字串决定。
+- 处理:追两个参数字符串确定 API,给 v5 改名,整段立刻可读;壳/注入器/免杀标配形态。
+- 变体:调用前三连(VirtualAlloc+memcpy+调用)= 手写 shellcode 加载;函数指针存全局表 = 批量解析(见 Win32 内存与加载 API 条)。`},
+	{Category: "functions", Title: "__CxxFrameHandler / _CxxThrowException", Content: `## C++ 异常处理特征
+
+- 函数出现在调用链 = 该函数带 C++ 异常/对象语义:__CxxFrameHandler 是 SEH 层的 C++ EH 分发器;_CxxThrowException 是 throw 的实现。
+- _CxxThrowException(抛出对象指针, Throw_Info*):类型信息在 Throw_Info→CatchableTypeArray 里,可反推抛的什么类型。
+- 逆向价值:throw 点常是"校验失败"分支(抛异常代替 return false)——patch 掉 throw 或其上游条件即可过校验。
+- 相关:RtlUnwind 回栈展开;std::string/vector 的构造析构链在这类函数里成片出现,先用结构体类型(T 键)恢复可读性。`},
 	// —— 进制与 ASCII ——
 	{Category: "ascii", Title: "ASCII 可打印字符对照表", Content: `## 分段速记(0x20–0x7E 可打印)
 
