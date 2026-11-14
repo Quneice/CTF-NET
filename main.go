@@ -64,6 +64,22 @@ func main() {
 		}
 	}
 
+	// 逆向 Wiki 库（SQLite）：与红队 Wiki 同款容错；空表时灌入逆向速查种子
+	var reverseWikiStore *wiki.Store
+	if rws, err := wiki.Open(filepath.Join(cfg.DataDir, "reverse_wiki.db")); err != nil {
+		log.Printf("[CTF-NET] 逆向 Wiki 库打开失败（逆向 Wiki 不可用）: %v", err)
+	} else {
+		reverseWikiStore = rws
+		defer reverseWikiStore.Close()
+		if n, err := rws.Count(); err == nil && n == 0 {
+			if err := rws.Seed(wiki.ReverseBuiltinSeed); err != nil {
+				log.Printf("[CTF-NET] 逆向 Wiki 内置数据灌入失败: %v", err)
+			} else {
+				log.Printf("[CTF-NET] 逆向 Wiki 已灌入 %d 条内置速查", len(wiki.ReverseBuiltinSeed))
+			}
+		}
+	}
+
 	// 漏洞库（SQLite）：打开失败仅禁用通用 PoC 检测的库浏览，不阻断主功能
 	if err := vulnlib.Init(filepath.Join(cfg.DataDir, "vulnlib.db")); err != nil {
 		log.Printf("[CTF-NET] 漏洞库打开失败（通用 PoC 检测库不可用）: %v", err)
@@ -78,14 +94,15 @@ func main() {
 	}
 
 	app := &App{
-		Reg:      core.DefaultRegistry,
-		Tasks:    tasks,
-		Sessions: sessions,
-		Files:    fileStore,
-		Projects: projectStore,
-		Wiki:     wikiStore,
-		Audit:    auditStore,
-		Cfg:      cfg,
+		Reg:         core.DefaultRegistry,
+		Tasks:       tasks,
+		Sessions:    sessions,
+		Files:       fileStore,
+		Projects:    projectStore,
+		Wiki:        wikiStore,
+		ReverseWiki: reverseWikiStore,
+		Audit:       auditStore,
+		Cfg:         cfg,
 	}
 
 	err := wails.Run(&options.App{

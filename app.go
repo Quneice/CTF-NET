@@ -86,14 +86,15 @@ type FileInfo struct {
 // 注意：绑定方法一律不接收 context.Context 首参——本版本 Wails 运行时不注入 ctx，
 // 前端实参会错位进 ctx 槽位导致 "cannot unmarshal ... into context.Context"。
 type App struct {
-	Reg      *core.Registry
-	Tasks    *core.TaskManager
-	Sessions *core.SessionRegistry
-	Files    *core.FileStore
-	Projects *projects.Store // 渗透测试项目管理（projects.go）
-	Wiki     *wiki.Store     // 红队 Wiki（wiki.go）
-	Cfg      *core.Config    // 统一应用配置（config_api.go）
-	Audit    *audit.Store   // 代码审计工作区（audit_api.go）
+	Reg         *core.Registry
+	Tasks       *core.TaskManager
+	Sessions    *core.SessionRegistry
+	Files       *core.FileStore
+	Projects    *projects.Store // 渗透测试项目管理（projects.go）
+	Wiki        *wiki.Store     // 红队 Wiki（wiki.go）
+	ReverseWiki *wiki.Store     // 逆向 Wiki（reverse_wiki.go）
+	Cfg         *core.Config    // 统一应用配置（config_api.go）
+	Audit       *audit.Store    // 代码审计工作区（audit_api.go）
 
 	ctx context.Context // Wails 应用上下文（OnStartup 注入，流式事件推送用）
 }
