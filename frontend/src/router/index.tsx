@@ -25,6 +25,7 @@ import ToolPage from '@/pages/ToolPage';
  * - `/c/misc.stego` → `/c/stego`(批 1:misc.stego 三个工具迁入 stego.*)
  * - `/c/crypto.encoding` → `/c/codec`、`/c/crypto.encoding.base` → `/c/codec.base`(批 2:codec 全量平移落地)
  * - `/c/crypto.modern.rsa.{algebraic, fermat-family, shared-structure, number-theoretic, coppersmith}` → `/c/crypto.modern.rsa`(批 5:22 个 RSA 工具扁平化挂载)
+ * - `/c/forensics.network` → `/c/traffic`(流量域独立顶级分类,22 工具迁入 traffic.*)
  */
 export const router = createBrowserRouter([
   // 模式选择页：全屏，不带 AppLayout 框架
@@ -51,6 +52,7 @@ export const router = createBrowserRouter([
       { path: 'c/crypto.modern.rsa.shared-structure', element: <Navigate to="/c/crypto.modern.rsa" replace /> },
       { path: 'c/crypto.modern.rsa.number-theoretic', element: <Navigate to="/c/crypto.modern.rsa" replace /> },
       { path: 'c/crypto.modern.rsa.coppersmith', element: <Navigate to="/c/crypto.modern.rsa" replace /> },
+      { path: 'c/forensics.network', element: <Navigate to="/c/traffic" replace /> },
       // 工具页由 AppLayout 内的 ToolTabsWorkspace 多开工作区接管渲染（keep-alive），
       // 此处的子路由仅用于路径匹配，element 不会被渲染
       { path: 't/:toolId', element: <ToolPage /> },

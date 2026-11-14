@@ -8,7 +8,7 @@
 
 ## 功能总览
 
-- **三模式工作台**:启动进入模式选择页——「CTF 模式」(Web/Crypto/Misc/Reverse/Pwn/取证/隐写等 14 个分类)、「渗透测试模式」(侦察 / 扫描 / 漏洞 / 武器库 / 隧道 / 辅助)与「模型安全模式」(越狱攻击 / 提示注入 / 数据投毒 / 模型后门),共享 Web、编码、OSINT 工具。
+- **五模式工作台**:启动进入模式选择页——「CTF 模式」(Web/Crypto/Misc/Reverse/Pwn/取证/隐写等 15 个分类)、「渗透测试模式」(侦察 / 扫描 / 漏洞 / 武器库 / 隧道 / 辅助)、「模型安全模式」(越狱攻击 / 提示注入 / 数据投毒 / 模型后门)、「流量分析模式」(流量解析 / 协议解码 / 流量指纹)、「逆向模式」(静态 / 动态 / 去混淆),共享 Web、编码、OSINT 工具。
 - **模型安全测试**(`internal/tools/aisec`):LLM 越狱/提示注入批量扫描(内置 20 种模板库 + 自定义 payload,OpenAI 兼容端点,中英拒绝判定 + 成功正则)、模型文件后门扫描(pickle/zip/safetensors 恶意导入检测)、训练数据投毒筛查(n-gram lift 触发器候选 + 可疑模式统计)。
 - **工具系统**:后端 Go 注册表 79 个真实工具(网络扫描、指纹、子域、AI、OCR/ASR、古典密码、RSA 攻击等),统一任务队列(异步 Job + `task:done` 事件推送)、交互会话(SSH/Shell 全双工)、产物下载;前端 600+ 工具目录中其余轻量工具由前端 local 处理器离线完成。
 - **AI 渗透引擎**(`internal/aiagent`):LLM 规划者+执行者双角色 agent,意图队列编排、内置工具调用、YAML 配方、角色目标分解/约束提取、代理环境注入、意图级取消与人工舵向;智谱 GLM/DeepSeek/OpenAI 兼容 API,全局代理生效;漏洞上报强制可复现证据,状态落盘 task.json 可复盘。
@@ -63,7 +63,7 @@ CTF-NET/
       web/                    # jndi(原生 Go SSH 一键利用)、ssti_jinja2 + 19 引擎占位、http_headers
                               #   + go:embed:JNDI 载荷模板
   frontend/                   # React + Vite + Tailwind
-    src/mock/                 # 前端事实源:600+ 工具目录、三模式分类树、模式配置
+    src/mock/                 # 前端事实源:600+ 工具目录、五模式分类树、模式配置
     src/adapters/             # 适配层:Wails 绑定 / 本地 mock 回退
     src/pages/                # 模式选择、首页、分类、工具、项目库、AI 对话、
                               #   AI 工作台 4 页(仪表盘/任务/发现/资产)、设置

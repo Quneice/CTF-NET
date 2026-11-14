@@ -130,11 +130,11 @@ export const categories: CategoryNode[] = [
     description: '数字取证',
     children: [
       // 批 7:纯分组分类(本层无直挂工具)按「分组 chips」呈现(migration-plan §8,复用批 4 FilterChip 机制):
-      // 父页 /c/forensics 顶部 chips(全部/内存取证/磁盘取证/流量分析/日志分析),「全部」= 分类下全部 54 个工具;
-      // 4 条子分类路由保留(直接访问 /c/forensics.disk 等仍可达);侧边栏 L2 节点保留。
+      // 父页 /c/forensics 顶部 chips(全部/内存取证/磁盘取证/日志分析),「全部」= 分类下全部 32 个工具;
+      // 原流量分析 segment 已独立为顶级 traffic 分类(22 个工具迁出,id 不变,仅 categoryId 迁移);
+      // 3 条子分类路由保留(直接访问 /c/forensics.disk 等仍可达);侧边栏 L2 节点保留。
       { id: 'forensics.memory', name: '内存取证', icon: 'MemoryStick', segment: true },
       { id: 'forensics.disk', name: '磁盘取证', icon: 'HardDrive', segment: true },
-      { id: 'forensics.network', name: '流量分析', icon: 'Radio', segment: true },
       { id: 'forensics.log', name: '日志分析', icon: 'ClipboardList', segment: true },
     ],
   },
@@ -237,4 +237,19 @@ export const categories: CategoryNode[] = [
   { id: 'aisec.poison', name: '数据投毒', icon: 'Database', description: '模型安全·投毒筛查与后门样本生成' },
   { id: 'aisec.backdoor', name: '模型后门', icon: 'HardDrive', description: '模型安全·模型文件后门与恶意载荷检测' },
   { id: 'aisec.adversarial', name: '对抗样本', icon: 'Swords', description: '模型安全·对抗样本生成与鲁棒性评估' },
+  // 流量分析域:原 forensics.network 二级 segment 独立成顶级分类
+  //(流量分析模式可见;CTF 模式共享该根——流量题本是取证子域)。
+  // 22 个工具由 forensics.network 迁入(工具 id 不变,仅 categoryId 迁移)。
+  {
+    id: 'traffic',
+    name: '流量分析',
+    icon: 'Radio',
+    description: '流量取证与协议分析',
+    children: [
+      { id: 'traffic.parse', name: '流量解析', icon: 'FileSearch', description: 'PCAP 文件与原始流量解析' },
+      { id: 'traffic.protocol', name: '协议解码', icon: 'Network', description: 'TCP/UDP/DNS/ICMP 等协议字段解码' },
+      { id: 'traffic.fingerprint', name: '流量指纹', icon: 'Search', description: 'JA3/HASSH/User-Agent 等指纹生成' },
+      { id: 'traffic.assist', name: '辅助处理', icon: 'Wrench', description: 'IP 段聚合、MAC 格式化、Defang 等' },
+    ],
+  },
 ];

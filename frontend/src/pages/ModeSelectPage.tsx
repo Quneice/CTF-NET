@@ -7,7 +7,7 @@ import { useModeStore } from '@/stores/useModeStore';
 
 /**
  * 模式选择页（/mode）：每次启动应用先落到本页。
- * 三张卡片分别对应「CTF 模式 / 渗透测试模式 / 模型安全模式」，点击进入首页。
+ * 五张卡片分别对应「CTF 模式 / 渗透测试模式 / 模型安全模式 / 流量分析模式 / 逆向模式」，点击进入首页。
  */
 export default function ModeSelectPage() {
   const setMode = useModeStore((s) => s.setMode);

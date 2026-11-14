@@ -5,11 +5,11 @@ import { categoryMap, getToolsUnderCategory } from './index';
 /**
  * 模式配置（单一数据源）。
  *
- * 「CTF 模式 / 渗透测试模式 / 模型安全模式」通过 categoryRoots 声明各自可见的一级分类；
+ * 「CTF 模式 / 渗透测试模式 / 模型安全模式 / 流量分析模式 / 逆向模式」通过 categoryRoots 声明各自可见的一级分类；
  * 分类可被多个模式共享（如 web / codec / osint 同时属于两种模式），
  * 调整归属只改本文件的 categoryRoots。
  */
-export type AppMode = 'ctf' | 'pentest' | 'modelsec';
+export type AppMode = 'ctf' | 'pentest' | 'modelsec' | 'traffic' | 'reverse';
 
 export interface ModeInfo {
   /** 模式显示名 */
@@ -26,7 +26,7 @@ export const MODE_CONFIG: Record<AppMode, ModeInfo> = {
   ctf: {
     label: 'CTF 模式',
     icon: 'Flag',
-    description: '竞赛解题：Web、Crypto、Misc、Reverse、Pwn、取证、隐写等 13 大分类',
+    description: '竞赛解题：Web、Crypto、Misc、Reverse、Pwn、取证、隐写等 15 大分类',
     categoryRoots: [
       'web',
       'crypto',
@@ -42,6 +42,7 @@ export const MODE_CONFIG: Record<AppMode, ModeInfo> = {
       'ai',
       'ai.pentest',
       'data',
+      'traffic',
     ],
   },
   pentest: {
@@ -75,6 +76,18 @@ export const MODE_CONFIG: Record<AppMode, ModeInfo> = {
       'aisec.adversarial',
       'codec',
     ],
+  },
+  traffic: {
+    label: '流量分析模式',
+    icon: 'Radio',
+    description: '流量取证:PCAP 解析、协议解码、流量指纹与提取导出,共享编码与数据处理工具',
+    categoryRoots: ['traffic', 'codec', 'data'],
+  },
+  reverse: {
+    label: '逆向模式',
+    icon: 'FileCode2',
+    description: '逆向工程:静态分析、动态调试、去混淆,共享编码与数据处理工具',
+    categoryRoots: ['reverse', 'codec', 'data'],
   },
 };
 
