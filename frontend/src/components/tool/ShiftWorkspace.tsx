@@ -51,7 +51,8 @@ export default function ShiftWorkspace() {
   const effectiveDomain = VALUE_MODES.includes(mode) ? domain : 'byte';
   const reversible = mode !== 'shl' && mode !== 'shr';
   const opts: ShiftOpts = { mode, domain: effectiveDomain, n, ...(mode === 'inc' ? { s } : {}) };
-  const inv = decode ? invertShift(opts) : opts;
+  // shl/shr 不可逆:即使残留 decode=true 也按正向计算,避免"有输入无输出"死局
+  const inv = decode && reversible ? invertShift(opts) ?? opts : opts;
 
   const output = useMemo(() => {
     if (!input) return '';
@@ -78,7 +79,12 @@ export default function ShiftWorkspace() {
           {/* 模式 */}
           <select
             value={mode}
-            onChange={(e) => setMode(e.target.value as ShiftMode)}
+            onChange={(e) => {
+              const next = e.target.value as ShiftMode;
+              // 切入位运算模式时按其范围收敛 n,避免携带超范围值(如 rotl k=10 带入 ROL)
+              if (BIT_MODES.includes(next)) setN((prev) => Math.max(0, Math.min(7, prev)));
+              setMode(next);
+            }}
             className="rounded-md border border-slate-300 bg-white px-2 py-1 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
           >
             {MODE_GROUPS.map((g) => (

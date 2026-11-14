@@ -75,11 +75,12 @@ export function applyShift(input: string, o: ShiftOpts): string {
     }
     return out;
   }
-  // const / inc:值域加法
+  // const / inc:值域加法(参数一律取整,保证加解密互逆不受小数输入破坏)
   let out = '';
   for (let i = 0; i < input.length; i++) {
     const c = input.charCodeAt(i);
-    const delta = o.mode === 'inc' ? o.n + i * (o.s ?? 1) : o.n;
+    const delta =
+      o.mode === 'inc' ? Math.trunc(o.n) + i * Math.trunc(o.s ?? 1) : Math.trunc(o.n);
     out += String.fromCharCode(domainAdd(c, delta, o.domain));
   }
   return out;
