@@ -40,7 +40,8 @@ type ToolsConfig struct {
 	Xray     string `json:"xray"`
 	Sqlmap   string `json:"sqlmap"`
 	PuttyDir string `json:"putty_dir"`
-	Fscan    string `json:"fscan"` // fscan exe 路径（端口扫描工具）
+	Fscan    string `json:"fscan"`    // fscan exe 路径（端口扫描工具）
+	Steghide string `json:"steghide"` // steghide exe 路径（图片隐写;exe 与 cygwin DLL 同目录）
 }
 
 // FrpConfig FRP 反向代理工具的服务器连接与部署配置。
@@ -132,14 +133,15 @@ func DefaultAppConfig() *AppConfig {
 			FrpsVersion:    "0.69.1",
 		},
 		Tools: ToolsConfig{
-			Python3: "python3",
-			Java:    "java",
-			Javac:   "javac",
-			Nmap:    "nmap",
-			Nuclei:  "nuclei",
-			Xray:    "xray",
-			Sqlmap:  "sqlmap",
-			Fscan:   `C:\Users\HP\Downloads\fscan_2.2.2_windows_x64.exe`, // 本机 fscan 下载路径，可在设置页改
+			Python3:  "python3",
+			Java:     "java",
+			Javac:    "javac",
+			Nmap:     "nmap",
+			Nuclei:   "nuclei",
+			Xray:     "xray",
+			Sqlmap:   "sqlmap",
+			Fscan:    `C:\Users\HP\Downloads\fscan_2.2.2_windows_x64.exe`, // 本机 fscan 下载路径，可在设置页改
+			Steghide: `C:\Users\HP\Downloads\steghide\steghide.exe`,       // steghide 0.5.1（同目录 cygwin DLL 一起）,可在设置页改
 		},
 		Executor: ExecutorConfig{
 			DefaultTimeout: 60,
@@ -422,6 +424,8 @@ func ToolPath(name string) string {
 		v = t.Sqlmap
 	case "fscan":
 		v = t.Fscan
+	case "steghide":
+		v = t.Steghide
 	}
 	if v == "" {
 		return name
