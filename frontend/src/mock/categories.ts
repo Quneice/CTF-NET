@@ -106,6 +106,8 @@ export const categories: CategoryNode[] = [
       { id: 'reverse.static', name: '静态分析', icon: 'FileSearch' },
       { id: 'reverse.dynamic', name: '动态分析', icon: 'Activity' },
       { id: 'reverse.deobfuscate', name: '去混淆', icon: 'Eraser' },
+      // 逆向 Wiki:知识库工作区(常用函数/进制 ASCII/套路笔记),工具页由 workspace 分发渲染
+      { id: 'reverse.wiki', name: '逆向 Wiki', icon: 'NotebookPen', description: '逆向知识库:函数速查、进制 ASCII、套路笔记' },
     ],
   },
   {

@@ -11,6 +11,7 @@ import PhpUnserializeWorkspace from '@/components/tool/PhpUnserializeWorkspace';
 import PocScanWorkspace from '@/components/poc/PocScanWorkspace';
 import FingerprintDbWorkspace from '@/components/fingerdb/FingerprintDbWorkspace';
 import RedTeamWikiWorkspace from '@/components/wiki/RedTeamWikiWorkspace';
+import ReverseWikiWorkspace from '@/components/wiki/ReverseWikiWorkspace';
 import StatusBadge from '@/components/tool/StatusBadge';
 import PlaceholderBanner from '@/components/tool/PlaceholderBanner';
 import OutputPanel from '@/components/output/OutputPanel';
@@ -138,6 +139,8 @@ export default function ToolPage({
         <FingerprintDbWorkspace />
       ) : tool.workspace === 'redteam-wiki' ? (
         <RedTeamWikiWorkspace />
+      ) : tool.workspace === 'reverse-wiki' ? (
+        <ReverseWikiWorkspace />
       ) : tool.codec ? (
         <CodecWorkspace tool={tool} />
       ) : tool.transform ? (
