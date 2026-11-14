@@ -106,8 +106,9 @@ func steghideRun(ctx context.Context, params map[string]any, tc *core.ToolContex
 		}
 		defer f.Close()
 		sc := bufio.NewScanner(f)
+		sc.Buffer(make([]byte, 64*1024), 1<<20) // 容忍长行;超限(>1MB)由 sc.Err 报告,不再静默吞行(终审#2)
 		for sc.Scan() {
-			line := strings.TrimSpace(sc.Text())
+			line := strings.TrimPrefix(strings.TrimSpace(sc.Text()), "\ufeff") // 剥 UTF-8 BOM(Notepad 字典,终审#3)
 			if line == "" || strings.HasPrefix(line, "#") {
 				continue
 			}
@@ -116,6 +117,9 @@ func steghideRun(ctx context.Context, params map[string]any, tc *core.ToolContex
 				break
 			}
 			candidates = append(candidates, line)
+		}
+		if err := sc.Err(); err != nil {
+			return &core.ToolResult{Status: core.StatusError, Stderr: fmt.Sprintf("字典解析失败(%v):存在超长行(>1MB)或编码异常,请检查字典文件", err)}, nil
 		}
 		if len(candidates) == 0 {
 			return &core.ToolResult{Status: core.StatusError, Stderr: "字典为空"}, nil

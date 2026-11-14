@@ -3368,7 +3368,7 @@ const fullTools: ToolDefinition[] = [
       submitUrl: '/api/tools/misc.steghide/run',
       pollUrl: '/api/tasks/{jobId}',
       intervalMs: 1000,
-      timeoutMs: 120000,
+      timeoutMs: 3600000,
       realBackend: true,
     },
     output: { type: 'markdown' },

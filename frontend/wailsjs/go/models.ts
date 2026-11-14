@@ -865,6 +865,7 @@ export namespace core {
 	    sqlmap: string;
 	    putty_dir: string;
 	    fscan: string;
+	    steghide: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new ToolsConfig(source);
@@ -881,6 +882,7 @@ export namespace core {
 	        this.sqlmap = source["sqlmap"];
 	        this.putty_dir = source["putty_dir"];
 	        this.fscan = source["fscan"];
+	        this.steghide = source["steghide"];
 	    }
 	}
 	export class FrpConfig {

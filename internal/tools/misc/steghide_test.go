@@ -171,3 +171,29 @@ func TestSteghideDictLimit(t *testing.T) {
 		t.Fatalf("超限应提示截断:\n%s", res.Stdout)
 	}
 }
+
+// 7.(终审修复)超长行字典:>64KB 单行使 Scanner 静默失败——修复后应明确报错而非假「字典为空/未命中」。
+func TestSteghideDictLongLine(t *testing.T) {
+	stegSkip(t)
+	tool, _ := core.DefaultRegistry.Get("misc.steghide")
+	work := t.TempDir()
+	stegFixture(t, work, "", "flag{x}")
+	huge := strings.Repeat("a", 1500000)
+	os.WriteFile(filepath.Join(work, "big.txt"), []byte(huge+"\nletmein\n"), 0o644)
+	res, err := tool.Run(context.Background(), map[string]any{"file": "cover.bmp", "mode": "dict", "dict": "big.txt"}, &core.ToolContext{Workdir: work, ArtifactsDir: t.TempDir()})
+	if err != nil || res.Status != core.StatusError {
+		t.Fatalf("超长行应明确报错,实际 status=%s err=%v out=%.200s", res.Status, err, res.Stdout)
+	}
+	if !strings.Contains(res.Stderr, "字典") || !strings.Contains(res.Stderr, "解析") {
+		t.Fatalf("错误应说明字典解析问题: %s", res.Stderr)
+	}
+}
+
+// 8.(终审修复)BOM 字典:首行 \ufeff 前缀应剥除,含 BOM 的真密码可命中。
+func TestSteghideDictBOM(t *testing.T) {
+	stegSkip(t)
+	res, _ := stegRun(t, map[string]any{"mode": "dict", "dict": "bom.txt", "__password": "letmein"})
+	if res.Status != core.StatusSuccess || !strings.Contains(res.Stdout, "flag{steghide_letmein_mode}") {
+		t.Fatalf("BOM 字典应仍命中:\n%s", res.Stdout)
+	}
+}
