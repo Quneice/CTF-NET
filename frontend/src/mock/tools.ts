@@ -3248,6 +3248,45 @@ const fullTools: ToolDefinition[] = [
     output: { type: 'custom', rendererId: 'image-lsb' },
   },
 
+  // —— 图片二进制侦察（真实后端 misc.image_recon，binwalk 二进制侧套路，与 LSB 工具互补）——
+  {
+    id: 'stego.image.image-recon',
+    name: '图片二进制侦察',
+    categoryId: 'stego.image',
+    description:
+      '图片二进制层隐写分析（binwalk 套路）：JPG 段 / PNG chunk 结构解析（CRC 异常标注）、'
+      + '结束标记（EOI/IEND）后附加数据提取（自动识别类型并导出）、全文件魔数扫描'
+      + '（嵌入 ZIP/RAR/7z/PNG/GZIP 等，ZIP 按 EOCD 精确定界）、可打印字符串与 flag 正则扫描；'
+      + '尾部与嵌入文件落盘可下载，可疑文本可复制到「移位变换」继续还原。',
+    tags: ['图片隐写', 'binwalk', '文件结构', '附加数据', '图种', 'Stego', 'Misc'],
+    version: '1.0.0',
+    formColumns: 2,
+    inputSchema: [
+      {
+        type: 'note',
+        name: 'note_image_recon',
+        label: '藏进图片二进制层的信息，一次扫出来',
+        spanFull: true,
+        content:
+          '① 结束标记后附加数据是最常见套路：JPG 的 FFD9、PNG 的 IEND 之后藏着文本/压缩包/整张图\n'
+          + '② 中部嵌入的文件（图种/压缩包）由魔数扫描发现，ZIP 按目录尾精确定界，产物可直接下载\n'
+          + '③ 尾部是打乱的 flag 时，复制预览文本到「逆向模式 · 移位变换」用格式爆破还原\n'
+          + '④ 像素层 LSB 隐写请用姊妹工具「图像 LSB 隐写提取」',
+      },
+      { type: 'file', name: 'file', label: '图片文件', accept: '.jpg,.jpeg,.png,.gif,.bmp,.webp,image/*' },
+      { type: 'text', name: 'strings_min', label: '字符串最小长度（可选）', placeholder: '默认 6' },
+    ],
+    invoke: {
+      type: 'task',
+      submitUrl: '/api/tools/misc.image_recon/run',
+      pollUrl: '/api/tasks/{jobId}',
+      intervalMs: 1000,
+      timeoutMs: 120000,
+      realBackend: true,
+    },
+    output: { type: 'custom', rendererId: 'image-recon' },
+  },
+
   // —— 微信 .dat 图片缓存还原（本地计算：单字节循环异或，文件头逆推密钥）——
   {
     id: 'misc.stego.wechat-dat',

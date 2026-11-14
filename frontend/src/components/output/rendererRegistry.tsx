@@ -29,6 +29,7 @@ const ImageOcrRenderer = lazy(() => import('./renderers/ImageOcrRenderer'));
 const TableMergeRenderer = lazy(() => import('./renderers/TableMergeRenderer'));
 const AudioAsrRenderer = lazy(() => import('./renderers/AudioAsrRenderer'));
 const AudioLsbRenderer = lazy(() => import('./renderers/AudioLsbRenderer'));
+const ImageReconRenderer = lazy(() => import('./renderers/ImageReconRenderer'));
 
 type Renderer = ComponentType<RendererProps>;
 
@@ -56,6 +57,7 @@ const customRenderers: Record<string, Renderer> = {
   'audio-asr': AudioAsrRenderer,
   'audio-lsb': AudioLsbRenderer,
   'image-lsb': AudioLsbRenderer, // 与 audio-lsb 共享 JSON 结构与渲染组件
+  'image-recon': ImageReconRenderer,
 };
 
 export function resolveRenderer(output: OutputSpec): Renderer {
