@@ -87,6 +87,13 @@ const GROUPS: GroupDef[] = [
         placeholder: '如 C:\\Downloads\\fscan.exe',
         help: '端口扫描工具的外部 exe 路径（pentest.scan.port-scan 使用）',
       },
+      {
+        key: 'steghide',
+        label: 'Steghide',
+        type: 'text',
+        placeholder: '如 C:\\Users\\HP\\Downloads\\steghide\\steghide.exe',
+        help: 'steghide 图片隐写工具 exe 路径（misc.steghide 使用;exe 与 cygwin DLL 须同目录,官方 SourceForge steghide 0.5.1 win32）',
+      },
     ],
   },
   {

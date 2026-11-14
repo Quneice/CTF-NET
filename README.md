@@ -115,6 +115,7 @@ CTF-NET/
 | misc | `image_lsb` | PNG/BMP 图像 LSB 隐写提取(zsteg 类):R/G/B/A 通道(含逐像素 RGB 交错)× bit0-2 × MSB/LSB 位序 auto 扫描,直接读 Pix 避免 RGBA 预乘失真,支持 8/16bit/灰度/调色板回退;与 audio_lsb 共享 internal/stego 引擎(类型识别/智能截断/预览);JPEG 有损格式明确引导 |
 | misc | `image_recon` | 图片二进制侦察(binwalk 套路):JPG 段/PNG chunk 结构解析(CRC 异常)、EOI/IEND 后附加数据提取(SOS 后正向扫描定位)、全文件魔数扫描(ZIP EOCD 定界、GZIP 3 字节、2 字节模式标疑似)、strings/flag;尾部与嵌入文件落盘可下载 |
 | misc | `pt_decode` | 思科 Packet Tracer 工程解码:四层解密(反转 XOR/Twofish 魔改 EAX 固定密钥/二次 XOR/zlib,纯 Go 移植双官方向量)还原拓扑 XML,提取 flag/password/secret/banner/版本/设备名,decoded.xml 落盘(≤7.x;金标准对拍) |
+| misc | `steghide` | steghide 图片隐写解码(外部 0.5.1,设置页配路径):空密码探测/指定密码/字典爆破三模式,命中即停,提取内容分类落盘(JPG/BMP/WAV;live 6 例) |
 | misc | `hash` / `file_checksum` / `wechat_dat` | 哈希、文件校验、微信 dat 图片恢复 |
 | data.extract | `image-ocr` / `image-qrcode` / `image-metadata` / `image-batch` | 图片 OCR(tesseract 中英语言包 go:embed)、二维码识别、EXIF 元数据(含 GPS 中国地理反查)、图片批处理 |
 | data.extract | `audio-asr` | 音频转文字:本地 whisper(无需联网,tiny/base/small 模型多进程并行),中文识别自动繁转简(OpenCC)与数字转阿拉伯(「幺三八…」→138…,便于正则匹配手机号/证件号) |

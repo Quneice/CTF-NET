@@ -3324,6 +3324,56 @@ const fullTools: ToolDefinition[] = [
     output: { type: 'markdown' },
   },
 
+  // —— steghide 图片隐写解码（真实后端 misc.steghide,外部 0.5.1 二进制,三模式爆破）——
+  {
+    id: 'stego.image.steghide',
+    name: 'Steghide 隐写解码',
+    categoryId: 'stego.image',
+    description:
+      'steghide 图片隐写提取（外部 steghide 0.5.1）：空密码探测 / 指定密码 / 字典爆破三模式，'
+      + '逐密码尝试命中即停，提取内容自动识别类型并落盘可下载（JPG/BMP/WAV 载体）。',
+    tags: ['steghide', '图片隐写', '字典爆破', 'JPG', 'BMP', 'Stego'],
+    version: '1.0.0',
+    formColumns: 2,
+    inputSchema: [
+      {
+        type: 'note',
+        name: 'note_steghide',
+        label: 'CTF 最常见的 steghide 套路',
+        spanFull: true,
+        content:
+          '① 九成题目是空密码：默认 empty 模式直接试\n'
+          + '② 题面给了口令线索（手机号/姓名拼音等）用 custom 模式\n'
+          + '③ 毫无线索时上传密码字典跑 dict 模式（逐行尝试，命中即停）\n'
+          + '④ exe 路径在设置页「外部工具路径 → Steghide」配置（需与 cygwin DLL 同目录）',
+      },
+      { type: 'file', name: 'file', label: '载体文件', accept: '.jpg,.jpeg,.bmp,.wav,image/*' },
+      {
+        type: 'select',
+        name: 'mode',
+        label: '模式',
+        defaultValue: 'empty',
+        options: [
+          { label: 'empty（空密码探测,最常见）', value: 'empty' },
+          { label: 'custom（指定密码）', value: 'custom' },
+          { label: 'dict（字典爆破）', value: 'dict' },
+        ],
+      },
+      { type: 'text', name: 'password', label: '密码（custom 模式）', placeholder: 'custom 模式必填' },
+      { type: 'file', name: 'dict', label: '字典文件（dict 模式）', accept: '.txt,.dic' },
+      { type: 'text', name: 'dict_limit', label: '字典行数上限', placeholder: '默认 100000' },
+    ],
+    invoke: {
+      type: 'task',
+      submitUrl: '/api/tools/misc.steghide/run',
+      pollUrl: '/api/tasks/{jobId}',
+      intervalMs: 1000,
+      timeoutMs: 120000,
+      realBackend: true,
+    },
+    output: { type: 'markdown' },
+  },
+
   // —— 微信 .dat 图片缓存还原（本地计算：单字节循环异或，文件头逆推密钥）——
   {
     id: 'misc.stego.wechat-dat',
