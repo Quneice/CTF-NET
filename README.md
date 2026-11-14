@@ -113,6 +113,7 @@ CTF-NET/
 | misc | `whitespace_codec` | Whitespace 解释器 + Snowfall 空白隐写(两 token 操作码规则;Bugku 14607 实测) |
 | misc | `audio_lsb` | WAV 音频隐写一键侦察:① 文件侦察(RIFF chunk 清单、data 之后附加数据提取并按魔数识别、原始字节 flag/strings 扫描)② LSB 位平面提取(bit0-3 × MSB/LSB 位序 × 全部/单声道 × 每采样 1-2bit)自动识别隐藏类型(JPEG/PNG/GIF/BMP/WEBP/ZIP/GZIP/RAR/7Z/PDF/SQLite/ELF/EXE/文本/flag 正则),JPEG 按 EOI、PNG 按 IEND 智能截断,图片命中内联 base64 预览 ③ 频谱图渲染(纯 Go radix-2 FFT + Hann 窗 → 灰度 PNG,full/low/ultra 三档频段,频域画字/二维码肉眼识别);PCM 8/16/24/32bit 与 float 32/64bit、WAVE_FORMAT_EXTENSIBLE、RIFF 尾部附加 chunk 兼容;真实题 hhh.wav(21MB)实测:LSB 0.4s 命中 9497B JPEG + 频谱图 3s |
 | misc | `image_lsb` | PNG/BMP 图像 LSB 隐写提取(zsteg 类):R/G/B/A 通道(含逐像素 RGB 交错)× bit0-2 × MSB/LSB 位序 auto 扫描,直接读 Pix 避免 RGBA 预乘失真,支持 8/16bit/灰度/调色板回退;与 audio_lsb 共享 internal/stego 引擎(类型识别/智能截断/预览);JPEG 有损格式明确引导 |
+| misc | `image_recon` | 图片二进制侦察(binwalk 套路):JPG 段/PNG chunk 结构解析(CRC 异常)、EOI/IEND 后附加数据提取(SOS 后正向扫描定位)、全文件魔数扫描(ZIP EOCD 定界、GZIP 3 字节、2 字节模式标疑似)、strings/flag;尾部与嵌入文件落盘可下载 |
 | misc | `hash` / `file_checksum` / `wechat_dat` | 哈希、文件校验、微信 dat 图片恢复 |
 | data.extract | `image-ocr` / `image-qrcode` / `image-metadata` / `image-batch` | 图片 OCR(tesseract 中英语言包 go:embed)、二维码识别、EXIF 元数据(含 GPS 中国地理反查)、图片批处理 |
 | data.extract | `audio-asr` | 音频转文字:本地 whisper(无需联网,tiny/base/small 模型多进程并行),中文识别自动繁转简(OpenCC)与数字转阿拉伯(「幺三八…」→138…,便于正则匹配手机号/证件号) |
