@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react';
-import { Binary, Repeat, Search, UnfoldVertical } from 'lucide-react';
+import { ArrowDown, ArrowUp, Binary, Layers, Plus, Repeat, Search, Trash2, UnfoldVertical } from 'lucide-react';
 
 import {
-  applyShift,
+  applyLayers,
   bruteForceShift,
   describeShift,
-  invertShift,
+  invertLayers,
   type ShiftDomain,
   type ShiftHit,
   type ShiftMode,
@@ -13,9 +13,10 @@ import {
 } from '@/lib/shift';
 
 /**
- * 移位变换工作区(逆向·变换还原):字符串移位全家桶。
- * 常数/递增(第 i 位 +(b+i·s))/位循环 ROL·ROR/字节位移/字符串循环旋转,
- * 三值域,加密解密互逆,并支持按用户指定 flag 格式串爆破参数。
+ * 移位变换工作区(逆向·变换还原):多层移位全家桶。
+ * 每层一个移位(常数/递增 b+i·s/ROL·ROR/SHL·SHR/字符串旋转),自上而下依序应用;
+ * 解密 = 各层求逆逆序应用(任一层含 SHL/SHR 则整体置灰);
+ * 爆破仅单层时可用,格式串由用户指定(题目给的 flag 格式)。
  */
 
 const MODE_GROUPS: { label: string; modes: { id: ShiftMode; name: string }[] }[] = [
@@ -28,76 +29,203 @@ const VALUE_MODES: ShiftMode[] = ['const', 'inc'];
 const BIT_MODES: ShiftMode[] = ['rol', 'ror', 'shl', 'shr'];
 const DOMAIN_LABEL: Record<ShiftDomain, string> = {
   byte: 'mod 256',
-  printable: '可打印环(0x20-0x7E)',
-  alpha: '字母环(保大小写)',
+  printable: '可打印环',
+  alpha: '字母环',
 };
 
 function toHex(s: string): string {
   return Array.from(s, (c) => (c.charCodeAt(0) & 0xff).toString(16).padStart(2, '0')).join(' ');
 }
 
+const defaultLayer = (): ShiftOpts => ({ mode: 'inc', domain: 'byte', n: 1, s: 1 });
+
+/** 单层配置卡片(模式/域/参数/删除/上下移) */
+function LayerCard({
+  index,
+  total,
+  opts,
+  onChange,
+  onDelete,
+  onMove,
+}: {
+  index: number;
+  total: number;
+  opts: ShiftOpts;
+  onChange: (patch: Partial<ShiftOpts>) => void;
+  onDelete: () => void;
+  onMove: (dir: -1 | 1) => void;
+}) {
+  const { mode } = opts;
+  const setMode2 = (next: ShiftMode) => {
+    // 切入位运算模式时按其范围收敛 n,避免携带超范围值
+    if (BIT_MODES.includes(next)) onChange({ mode: next, n: Math.max(0, Math.min(7, opts.n)) });
+    else onChange({ mode: next });
+  };
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-md border border-slate-200 bg-white px-2.5 py-2 text-xs dark:border-slate-700 dark:bg-slate-800">
+      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-50 font-mono text-[11px] font-medium text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400">
+        {index + 1}
+      </span>
+      <select
+        value={mode}
+        onChange={(e) => setMode2(e.target.value as ShiftMode)}
+        className="rounded-md border border-slate-300 bg-white px-2 py-1 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+      >
+        {MODE_GROUPS.map((g) => (
+          <optgroup key={g.label} label={g.label}>
+            {g.modes.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.name}
+              </option>
+            ))}
+          </optgroup>
+        ))}
+      </select>
+      {mode === 'inc' && (
+        <>
+          <label className="flex items-center gap-1">
+            b
+            <input
+              type="number"
+              value={opts.n}
+              onChange={(e) => onChange({ n: Math.trunc(Number(e.target.value) || 0) })}
+              className="w-14 rounded-md border border-slate-300 bg-white px-1.5 py-1 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+            />
+          </label>
+          <label className="flex items-center gap-1">
+            s
+            <input
+              type="number"
+              value={opts.s ?? 1}
+              onChange={(e) => onChange({ s: Math.trunc(Number(e.target.value) || 0) })}
+              className="w-14 rounded-md border border-slate-300 bg-white px-1.5 py-1 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+            />
+          </label>
+        </>
+      )}
+      {mode === 'const' && (
+        <label className="flex items-center gap-1">
+          N
+          <input
+            type="number"
+            value={opts.n}
+            onChange={(e) => onChange({ n: Math.trunc(Number(e.target.value) || 0) })}
+            className="w-16 rounded-md border border-slate-300 bg-white px-1.5 py-1 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+          />
+        </label>
+      )}
+      {BIT_MODES.includes(mode) && (
+        <label className="flex items-center gap-1">
+          位数
+          <input
+            type="number"
+            min={0}
+            max={7}
+            value={opts.n}
+            onChange={(e) => onChange({ n: Math.max(0, Math.min(7, Math.trunc(Number(e.target.value) || 0))) })}
+            className="w-14 rounded-md border border-slate-300 bg-white px-1.5 py-1 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+          />
+        </label>
+      )}
+      {(mode === 'rotl' || mode === 'rotr') && (
+        <label className="flex items-center gap-1">
+          k
+          <input
+            type="number"
+            value={opts.n}
+            onChange={(e) => onChange({ n: Math.trunc(Number(e.target.value) || 0) })}
+            className="w-14 rounded-md border border-slate-300 bg-white px-1.5 py-1 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+          />
+        </label>
+      )}
+      {VALUE_MODES.includes(mode) && (
+        <span className="flex items-center gap-1.5">
+          {(Object.keys(DOMAIN_LABEL) as ShiftDomain[]).map((d) => (
+            <label key={d} className="flex items-center gap-0.5">
+              <input type="radio" name={`shift-domain-${index}`} checked={opts.domain === d} onChange={() => onChange({ domain: d })} />
+              {DOMAIN_LABEL[d]}
+            </label>
+          ))}
+        </span>
+      )}
+      <span className="ml-auto flex shrink-0 items-center gap-0.5">
+        <button
+          type="button"
+          onClick={() => onMove(-1)}
+          disabled={index === 0}
+          className="rounded p-1 text-slate-400 hover:bg-slate-100 disabled:opacity-30 dark:hover:bg-slate-700"
+          title="上移此层"
+        >
+          <ArrowUp className="h-3.5 w-3.5" />
+        </button>
+        <button
+          type="button"
+          onClick={() => onMove(1)}
+          disabled={index === total - 1}
+          className="rounded p-1 text-slate-400 hover:bg-slate-100 disabled:opacity-30 dark:hover:bg-slate-700"
+          title="下移此层"
+        >
+          <ArrowDown className="h-3.5 w-3.5" />
+        </button>
+        <button
+          type="button"
+          onClick={onDelete}
+          disabled={total <= 1}
+          className="rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-500 disabled:opacity-30 dark:hover:bg-red-500/10"
+          title={total <= 1 ? '至少保留一层' : '删除此层'}
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      </span>
+    </div>
+  );
+}
+
 export default function ShiftWorkspace() {
   const [input, setInput] = useState('');
-  const [mode, setMode] = useState<ShiftMode>('inc');
-  const [domain, setDomain] = useState<ShiftDomain>('byte');
-  const [n, setN] = useState(1);
-  const [s, setS] = useState(1);
+  const [layers, setLayers] = useState<ShiftOpts[]>([defaultLayer()]);
   const [decode, setDecode] = useState(false);
   // 爆破
   const [format, setFormat] = useState('');
   const [anywhere, setAnywhere] = useState(false);
   const [hits, setHits] = useState<ShiftHit[] | null>(null);
 
-  const effectiveDomain = VALUE_MODES.includes(mode) ? domain : 'byte';
-  const reversible = mode !== 'shl' && mode !== 'shr';
-  const opts: ShiftOpts = { mode, domain: effectiveDomain, n, ...(mode === 'inc' ? { s } : {}) };
-  // shl/shr 不可逆:即使残留 decode=true 也按正向计算,避免"有输入无输出"死局
-  const inv = decode && reversible ? invertShift(opts) ?? opts : opts;
+  const reversible = useMemo(() => layers.every((o) => o.mode !== 'shl' && o.mode !== 'shr'), [layers]);
+  const activeLayers = decode && reversible ? invertLayers(layers) ?? layers : layers;
 
   const output = useMemo(() => {
     if (!input) return '';
-    if (!inv) return '';
-    try {
-      return applyShift(input, inv);
-    } catch {
-      return '';
-    }
-  }, [input, inv]);
+    return applyLayers(input, activeLayers);
+  }, [input, activeLayers]);
 
+  const patchLayer = (i: number, patch: Partial<ShiftOpts>) =>
+    setLayers((ls) => ls.map((l, j) => (j === i ? { ...l, ...patch } : l)));
+  const deleteLayer = (i: number) => setLayers((ls) => (ls.length > 1 ? ls.filter((_, j) => j !== i) : ls));
+  const moveLayer = (i: number, dir: -1 | 1) =>
+    setLayers((ls) => {
+      const j = i + dir;
+      if (j < 0 || j >= ls.length) return ls;
+      const copy = [...ls];
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+      return copy;
+    });
+
+  const singleLayer = layers.length === 1;
   const runBrute = () => {
     setHits(bruteForceShift(input, format.trim(), anywhere));
   };
 
   return (
     <div className="mt-4 flex flex-col gap-4">
-      {/* 参数区 */}
+      {/* 移位层 */}
       <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-900/60">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
           <span className="flex items-center gap-1 font-medium text-slate-600 dark:text-slate-300">
             <Binary className="h-4 w-4 text-indigo-500" /> 移位变换
           </span>
-          {/* 模式 */}
-          <select
-            value={mode}
-            onChange={(e) => {
-              const next = e.target.value as ShiftMode;
-              // 切入位运算模式时按其范围收敛 n,避免携带超范围值(如 rotl k=10 带入 ROL)
-              if (BIT_MODES.includes(next)) setN((prev) => Math.max(0, Math.min(7, prev)));
-              setMode(next);
-            }}
-            className="rounded-md border border-slate-300 bg-white px-2 py-1 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-          >
-            {MODE_GROUPS.map((g) => (
-              <optgroup key={g.label} label={g.label}>
-                {g.modes.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.name}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
-          {/* 方向 */}
+          <span className="flex items-center gap-1 text-slate-400">
+            <Layers className="h-3.5 w-3.5" /> 共 {layers.length} 层,自上而下依序应用
+          </span>
           <button
             type="button"
             onClick={() => setDecode((d) => !d)}
@@ -107,84 +235,32 @@ export default function ShiftWorkspace() {
                 ? 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-400'
                 : 'border-slate-300 bg-white text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'
             }`}
-            title={reversible ? '切换加密/解密方向' : 'SHL/SHR 有损不可逆,无解密方向'}
+            title={reversible ? '切换加密/解密方向(解密=各层求逆逆序应用)' : '任一层含 SHL/SHR(有损)则整体不可逆'}
           >
             <Repeat className="h-3.5 w-3.5" />
             {decode ? '解密(逆变换)' : '加密(正变换)'}
           </button>
+          <button
+            type="button"
+            onClick={() => setLayers((ls) => [...ls, defaultLayer()])}
+            className="ml-auto flex items-center gap-1 rounded-md bg-indigo-500 px-2 py-1 font-medium text-white hover:bg-indigo-600"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            添加移位层
+          </button>
         </div>
-
-        {/* 参数与域 */}
-        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-600 dark:text-slate-300">
-          {mode === 'inc' && (
-            <>
-              <label className="flex items-center gap-1">
-                起始 b
-                <input
-                  type="number"
-                  value={n}
-                  onChange={(e) => setN(Number(e.target.value) || 0)}
-                  className="w-16 rounded-md border border-slate-300 bg-white px-1.5 py-1 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-                />
-              </label>
-              <label className="flex items-center gap-1">
-                步长 s
-                <input
-                  type="number"
-                  value={s}
-                  onChange={(e) => setS(Number(e.target.value) || 0)}
-                  className="w-16 rounded-md border border-slate-300 bg-white px-1.5 py-1 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-                />
-              </label>
-              <span className="text-slate-400">第 i 位 +({n} + i·{s}),如 b=1 s=1 → +1,+2,+3…</span>
-            </>
-          )}
-          {mode === 'const' && (
-            <label className="flex items-center gap-1">
-              常数 N(可负)
-              <input
-                type="number"
-                value={n}
-                onChange={(e) => setN(Number(e.target.value) || 0)}
-                className="w-20 rounded-md border border-slate-300 bg-white px-1.5 py-1 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-              />
-            </label>
-          )}
-          {BIT_MODES.includes(mode) && (
-            <label className="flex items-center gap-1">
-              位数 n(1-7)
-              <input
-                type="number"
-                min={0}
-                max={7}
-                value={n}
-                onChange={(e) => setN(Math.max(0, Math.min(7, Number(e.target.value) || 0)))}
-                className="w-16 rounded-md border border-slate-300 bg-white px-1.5 py-1 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-              />
-            </label>
-          )}
-          {(mode === 'rotl' || mode === 'rotr') && (
-            <label className="flex items-center gap-1">
-              旋转位数 k
-              <input
-                type="number"
-                value={n}
-                onChange={(e) => setN(Number(e.target.value) || 0)}
-                className="w-16 rounded-md border border-slate-300 bg-white px-1.5 py-1 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-              />
-            </label>
-          )}
-          {VALUE_MODES.includes(mode) && (
-            <span className="flex items-center gap-1.5">
-              值域:
-              {(Object.keys(DOMAIN_LABEL) as ShiftDomain[]).map((d) => (
-                <label key={d} className="flex items-center gap-0.5">
-                  <input type="radio" checked={domain === d} onChange={() => setDomain(d)} />
-                  {DOMAIN_LABEL[d]}
-                </label>
-              ))}
-            </span>
-          )}
+        <div className="mt-2 flex flex-col gap-1.5">
+          {layers.map((l, i) => (
+            <LayerCard
+              key={i}
+              index={i}
+              total={layers.length}
+              opts={l}
+              onChange={(p) => patchLayer(i, p)}
+              onDelete={() => deleteLayer(i)}
+              onMove={(d) => moveLayer(i, d)}
+            />
+          ))}
         </div>
       </div>
 
@@ -202,7 +278,7 @@ export default function ShiftWorkspace() {
         </div>
         <div className="flex flex-col gap-1">
           <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-            输出{inv ? ` · ${describeShift(inv)}` : ' · 该模式有损不可逆,仅正向'}
+            输出 · {activeLayers.map(describeShift).join(' → ')}
           </span>
           <textarea
             value={output}
@@ -223,20 +299,31 @@ export default function ShiftWorkspace() {
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <Search className="h-4 w-4 shrink-0 text-indigo-500" />
           <span className="font-medium text-slate-600 dark:text-slate-300">格式爆破</span>
+          {!singleLayer && (
+            <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] text-amber-700 dark:bg-amber-500/10 dark:text-amber-400">
+              多层不支持爆破:请逐层还原到单层后再试
+            </span>
+          )}
           <input
             value={format}
             onChange={(e) => setFormat(e.target.value)}
+            disabled={!singleLayer}
             placeholder="题目给的 flag 格式,如 flag{ / ctfshow{"
-            className="min-w-[12rem] flex-1 rounded-md border border-slate-300 bg-white px-2 py-1.5 font-mono text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+            className="min-w-[12rem] flex-1 rounded-md border border-slate-300 bg-white px-2 py-1.5 font-mono text-xs disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
           />
           <label className="flex items-center gap-1 text-slate-600 dark:text-slate-300">
-            <input type="checkbox" checked={anywhere} onChange={(e) => setAnywhere(e.target.checked)} />
+            <input
+              type="checkbox"
+              checked={anywhere}
+              disabled={!singleLayer}
+              onChange={(e) => setAnywhere(e.target.checked)}
+            />
             匹配任意位置(否则前缀)
           </label>
           <button
             type="button"
             onClick={runBrute}
-            disabled={!input || !format.trim()}
+            disabled={!input || !format.trim() || !singleLayer}
             className="rounded-md bg-indigo-500 px-3 py-1.5 font-medium text-white hover:bg-indigo-600 disabled:opacity-40"
           >
             爆破
@@ -253,10 +340,7 @@ export default function ShiftWorkspace() {
                     <button
                       type="button"
                       onClick={() => {
-                        setMode(h.opts.mode);
-                        setDomain(h.opts.domain);
-                        setN(h.opts.n);
-                        if (h.opts.s !== undefined) setS(h.opts.s);
+                        setLayers([h.opts]);
                         setDecode(false);
                         setInput(h.plain);
                       }}
