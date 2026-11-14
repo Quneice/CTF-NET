@@ -251,7 +251,7 @@ export default function ShiftWorkspace() {
     if (r.budgetExceeded) {
       setHits([]);
       setBruteMsg(
-        `组合数 ${r.combos.toLocaleString()} 超预算(200 万):减少层数,或把大参数空间层(递增/XOR)换成常数/位运算层。`,
+        `组合数 ${r.combos.toLocaleString()} 超预算(${r.budget.toLocaleString()}):减少层数,或把大参数空间层(递增/XOR)换成常数/位运算层。`,
       );
       return;
     }
@@ -271,6 +271,9 @@ export default function ShiftWorkspace() {
         },
       })),
     );
+    if (r.truncated) {
+      setBruteMsg(`命中数达上限(1000)已截断:格式串太短导致大量等价命中,建议加长已知片段。`);
+    }
   };
 
   return (
@@ -384,7 +387,7 @@ export default function ShiftWorkspace() {
         <p className="mt-1 text-[11px] text-slate-400">
           {singleLayer
             ? '单层:全范围穷举 + XOR 已知前缀攻击。'
-            : '多层:紧凑范围(常数 ±16 / 递增 b±8·s±2 / XOR 单字节 / 位 1-7),组合预算 200 万,超出即拒(高层数请减层)。'}
+            : '多层:紧凑范围(常数 ±16 / 递增 b±8·s±2 / XOR 单字节 / 位 1-7 / 旋转 ≤min(密文长,32)),组合预算按输入自动(拉丁区 200 万 / 其他 10 万),超出即拒(高层数请减层)。'}
         </p>
         {bruteMsg && (
           <p className="mt-1 rounded-md bg-amber-50 px-2 py-1 text-[11px] text-amber-700 dark:bg-amber-500/10 dark:text-amber-400">

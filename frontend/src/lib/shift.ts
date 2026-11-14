@@ -43,11 +43,13 @@ export interface LayersHit {
   desc: string;
 }
 
-/** 多层爆破结果:combos 为组合总数;budgetExceeded 表示超出预算被拒 */
+/** 多层爆破结果:combos 为组合总数;budget 为生效预算;budgetExceeded 表示超出预算被拒;truncated 表示命中数达上限被截断 */
 export interface LayersBruteResult {
   hits: LayersHit[];
   combos: number;
   budgetExceeded: boolean;
+  truncated: boolean;
+  budget: number;
 }
 
 /** 值域内加法(byte: mod 256;printable: 可打印环,非可打印原样;alpha: 字母环,非字母原样) */
@@ -287,6 +289,7 @@ const CHAIN_BRUTE = {
   incB: 8, // inc b ∈ ±8(17)
   incS: 2, // inc s ∈ ±2(5)
   rotCap: 32, // rotl/rotr k ≤ 32(再按密文长取小)
+  hitsCap: 1000, // 命中数上限(防退化输入产生十万级命中冻结 UI)
 };
 
 /** 单层紧凑候选集(保留用户层结构与域;XOR 层在链爆中仅单字节 256) */
@@ -391,42 +394,48 @@ export function bruteForceLayers(
   anywhere: boolean,
   layers: ShiftOpts[],
 ): LayersBruteResult {
-  if (!format || layers.length === 0) return { hits: [], combos: 0, budgetExceeded: false };
+  if (!format || layers.length === 0) {
+    return { hits: [], combos: 0, budgetExceeded: false, truncated: false, budget: 0 };
+  }
   const cipherLen = Array.from(cipher).length;
   // 每层的解码候选(用户顺序索引);应用时逆序遍历
   const decodeSets = layers.map((l) => decodeCandidates(l, Math.max(cipherLen, 1)));
   const combos = decodeSets.reduce((a, c) => a * c.length, 1);
-  const budget = isLatin1(cipher) ? CHAIN_BRUTE.budgetFast : CHAIN_BRUTE.budgetSlow;
+  const latin = isLatin1(cipher);
+  const budget = latin ? CHAIN_BRUTE.budgetFast : CHAIN_BRUTE.budgetSlow;
   if (combos > budget || !Number.isFinite(combos)) {
-    return { hits: [], combos, budgetExceeded: true };
+    return { hits: [], combos, budgetExceeded: true, truncated: false, budget };
   }
   const hits: LayersHit[] = [];
+  let truncated = false;
+  let stop = false;
   const match = (plain: string) => (anywhere ? plain.includes(format) : plain.startsWith(format));
-  /** 记录命中:应用的是解码候选,换算回用户顺序的加密参数 */
-  const record = (applied: ShiftOpts[]) => {
-    const enc = applied.map((c) => invertShift(c) ?? c);
-    let plain = '';
-    // applied[0] 对应 layers[0] 的解码候选;plain 已由调用方算出
-    return enc;
-  };
+  /** 解码候选换算回用户顺序的加密参数(候选均来自可逆模式,invertShift 非 null) */
+  const toEnc = (applied: ShiftOpts[]) => applied.map((c) => invertShift(c) ?? c);
 
-  if (isLatin1(cipher)) {
+  if (latin) {
     // 字节快路径:DFS 从用户层链的最后一层往前解,祖先层只算一次
     const root = new Uint8Array(cipher.length);
     for (let i = 0; i < cipher.length; i++) root[i] = cipher.charCodeAt(i);
     const applied = new Array<ShiftOpts>(layers.length); // applied[i] = 第 i 层实际使用的解码候选
     const dfs = (depth: number, cur: Uint8Array) => {
+      if (stop) return;
       if (depth === layers.length) {
         let plain = '';
         for (let i = 0; i < cur.length; i++) plain += String.fromCharCode(cur[i]);
         if (match(plain)) {
-          const enc = record(applied);
+          const enc = toEnc(applied);
           hits.push({ layers: enc, plain, desc: enc.map(describeShift).join(' → ') });
+          if (hits.length >= CHAIN_BRUTE.hitsCap) {
+            truncated = true;
+            stop = true;
+          }
         }
         return;
       }
       const layerIdx = layers.length - 1 - depth; // 逆序应用
       for (const cand of decodeSets[layerIdx]) {
+        if (stop) break;
         applied[layerIdx] = cand;
         dfs(depth + 1, applyLayerBytes(cur, cand));
       }
@@ -435,20 +444,26 @@ export function bruteForceLayers(
   } else {
     const applied = new Array<ShiftOpts>(layers.length);
     const dfs = (depth: number, cur: string) => {
+      if (stop) return;
       if (depth === layers.length) {
         if (match(cur)) {
-          const enc = record(applied);
+          const enc = toEnc(applied);
           hits.push({ layers: enc, plain: cur, desc: enc.map(describeShift).join(' → ') });
+          if (hits.length >= CHAIN_BRUTE.hitsCap) {
+            truncated = true;
+            stop = true;
+          }
         }
         return;
       }
       const layerIdx = layers.length - 1 - depth;
       for (const cand of decodeSets[layerIdx]) {
+        if (stop) break;
         applied[layerIdx] = cand;
         dfs(depth + 1, applyShift(cur, cand));
       }
     };
     dfs(0, cipher);
   }
-  return { hits, combos, budgetExceeded: false };
+  return { hits, combos, budgetExceeded: false, truncated, budget };
 }
