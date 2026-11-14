@@ -114,9 +114,11 @@ func imageReconRun(ctx context.Context, params map[string]any, tc *core.ToolCont
 		}
 	}
 
-	rep := &imageReconReport{Params: map[string]string{
-		"file": paramStr(params, "file"), "strings_min": fmt.Sprintf("%d", stringsMin),
-	}}
+	rep := &imageReconReport{
+		Params:    map[string]string{"file": paramStr(params, "file"), "strings_min": fmt.Sprintf("%d", stringsMin)},
+		Structure: []imageReconSeg{}, // 空集合必须是 [] 而非 null(Go nil 切片 → JSON null 会打崩前端渲染器)
+		Embedded:  []imageReconEmbedded{},
+	}
 	rep.File.Name = paramStr(params, "file")
 	rep.File.Size = len(data)
 	rep.Artifacts = []string{}
@@ -132,9 +134,7 @@ func imageReconRun(ctx context.Context, params map[string]any, tc *core.ToolCont
 	case "PNG":
 		rep.Structure, hostEnd = imageReconWalkPNG(data)
 	case "GIF":
-		if i := bytes.LastIndexByte(data, 0x3B); i >= 0 {
-			hostEnd = i + 1
-		}
+		hostEnd = imageReconWalkGIF(data)
 	case "BMP":
 		hostEnd = imageReconBMPDataEnd(data)
 	case "WEBP":
@@ -162,13 +162,11 @@ func imageReconRun(ctx context.Context, params map[string]any, tc *core.ToolCont
 	report(45, "检查结束标记后附加数据")
 	if hostEnd >= 0 && hostEnd < len(data) {
 		tr := data[hostEnd:]
-		typ, ext := imageReconClassify(tr)
-		payload := tr
-		if ext != "" && ext != "txt" && ext != "bin" {
-			if cut := stego.Cut(tr, 0, stego.TypeOf(typ, ext)); len(cut) > 0 && len(cut) <= len(tr) {
-				payload = cut
-			}
+		typ, ext, payload := imageReconClassify(tr)
+		if ext == "zip" {
+			payload = imageReconZipDelimit(payload)
 		}
+		payload = imageReconCap(payload)
 		art, _ := writeArtifact("trailing."+map[bool]string{true: ext, false: "bin"}[ext != ""], payload)
 		rep.Trailing = &imageReconTrailing{
 			Offset: hostEnd, Size: len(tr), Type: typ, Ext: ext,
@@ -184,14 +182,21 @@ func imageReconRun(ctx context.Context, params map[string]any, tc *core.ToolCont
 
 	// —— strings / flag ——
 	report(80, "strings 与 flag 扫描")
-	strs := stego.PrintableStrings(data, stringsMin, 64)
-	previews := strs
-	if len(previews) > 200 {
-		previews = previews[:200]
+	strs := stego.PrintableStrings(data, stringsMin, 200) // 第 3 参为条数上限;每条再截 64 字符
+	previews := make([]string, 0, len(strs))
+	for _, s := range strs {
+		if len(s) > 64 {
+			s = s[:64]
+		}
+		previews = append(previews, s)
+	}
+	flags := stego.Flags(data)
+	if flags == nil {
+		flags = []string{}
 	}
 	rep.Strings = &imageReconStrings{
 		Count: len(strs), Previews: previews,
-		Flags: stego.Flags(data),
+		Flags: flags,
 	}
 
 	// —— summary ——
@@ -357,10 +362,59 @@ func imageReconWalkPNG(data []byte) ([]imageReconSeg, int) {
 	return segs, -1
 }
 
+// imageReconWalkGIF GIF 块遍历定位 trailer(0x3B);rfind 会被尾部随机 0x3B 截偏(终审裁定改块遍历)。
+func imageReconWalkGIF(data []byte) int {
+	if len(data) < 14 {
+		return -1
+	}
+	packed := data[10]
+	i := 13
+	if packed&0x80 != 0 { // 全局色表
+		i += 3 << ((packed & 7) + 1)
+	}
+	for i < len(data) {
+		switch data[i] {
+		case 0x3B: // trailer
+			return i + 1
+		case 0x21: // 扩展:intro + label + 子块链
+			i += 2
+			i = gifSkipSubBlocks(data, i)
+		case 0x2C: // 图像描述符:9 字节头(+可选局部色表)+ 数据子块链
+			if i+10 > len(data) {
+				return -1
+			}
+			lp := data[i+9]
+			j := i + 10
+			if lp&0x80 != 0 {
+				j += 3 << ((lp & 7) + 1)
+			}
+			i = gifSkipSubBlocks(data, j)
+		default:
+			return -1
+		}
+		if i < 0 {
+			return -1
+		}
+	}
+	return -1
+}
+
+func gifSkipSubBlocks(data []byte, i int) int {
+	for i < len(data) {
+		n := int(data[i])
+		i++
+		if n == 0 {
+			return i
+		}
+		i += n
+	}
+	return -1
+}
+
 // ---------- BMP / 魔数扫描 ----------
 
 func imageReconBMPDataEnd(data []byte) int {
-	if len(data) < 26 {
+	if len(data) < 30 { // bpp 在 28-30,需完整头(切片可越 len 读 cap 松弛区的 UB 已实测)
 		return -1
 	}
 	offBits := int(binary.LittleEndian.Uint32(data[10:14]))
@@ -383,8 +437,8 @@ func imageReconBMPDataEnd(data []byte) int {
 // 本地补充 GZIP 3 字节前缀(1F 8B 08);2 字节模式(BM/MZ)远离偏移 0 仅标疑似不导出;
 // ZIP 命中按 EOCD(PK0506 + 22 + 注释长)定界,失败回退到文件尾。
 func imageReconScanMagics(data []byte, hostFormat string, writeArtifact func(name string, content []byte) (string, bool)) []imageReconEmbedded {
-	var out []imageReconEmbedded
-	seen := map[int]bool{} // 去重(同偏移多模式只报首个)
+	out := []imageReconEmbedded{} // 空集合非 nil(JSON [] 契约)
+	seen := map[int]bool{}        // 去重(同偏移多模式只报首个)
 
 	pushHit := func(name string, off int, content []byte, suspected bool) {
 		if seen[off] {
@@ -430,23 +484,6 @@ func imageReconScanMagics(data []byte, hostFormat string, writeArtifact func(nam
 		out = append(out, e)
 	}
 
-	zipDelimit := func(off int) []byte {
-		eocd := bytes.LastIndex(data[off:], []byte("PK\x05\x06"))
-		if eocd < 0 {
-			return data[off:] // 回退:到文件尾
-		}
-		eocd += off
-		if eocd+22 > len(data) {
-			return data[off:]
-		}
-		commentLen := int(binary.LittleEndian.Uint16(data[eocd+20 : eocd+22]))
-		end := eocd + 22 + commentLen
-		if end > len(data) {
-			end = len(data)
-		}
-		return data[off:end]
-	}
-
 	// 全置信模式:引擎表 Anywhere 且 ≥3 字节
 	for _, mg := range stego.Magics {
 		if !mg.Anywhere || len(mg.Prefix) < 3 || mg.Name == "ZIP(空)" {
@@ -463,15 +500,15 @@ func imageReconScanMagics(data []byte, hostFormat string, writeArtifact func(nam
 			if off == 0 && (hostFormat == mg.Name || (hostFormat == "JPG" && mg.Name == "JPEG")) { // @0 宿主自身(格式名与引擎魔数名归一)
 				continue
 			}
-			if mg.Name == "ZIP" || mg.Name == "ZIP(空)" {
-				pushHit(mg.Name, off, zipDelimit(off), false)
+			if mg.Name == "ZIP" {
+				pushHit(mg.Name, off, imageReconCap(imageReconZipDelimit(data[off:])), false)
 				continue
 			}
 			content := data[off:]
-			if cut := stego.Cut(data[off:], 0, stego.TypeOf(mg.Name, mg.Ext)); len(cut) > 0 && len(cut) <= len(content) {
+			if cut := stego.Cut(content, 0, mg.Name); len(cut) > 0 && len(cut) <= len(content) {
 				content = cut
 			}
-			pushHit(mg.Name, off, content, false)
+			pushHit(mg.Name, off, imageReconCap(content), false)
 		}
 	}
 	// 本地补充:GZIP 3 字节(1F 8B 08)
@@ -486,7 +523,7 @@ func imageReconScanMagics(data []byte, hostFormat string, writeArtifact func(nam
 		if off == 0 && hostFormat == "GZIP" {
 			continue
 		}
-		pushHit("GZIP3", off, data[off:], false)
+		pushHit("GZIP3", off, imageReconCap(data[off:]), false)
 	}
 	// 疑似(2 字节,远离偏移 0):仅报告不导出
 	for _, two := range []struct {
@@ -511,14 +548,44 @@ func imageReconScanMagics(data []byte, hostFormat string, writeArtifact func(nam
 
 // imageReconClassify 尾部数据类型:魔数命中(≥3B)→ 引擎命名;短流文本启发(引擎门槛
 // ≥32B,gugugu 的 24B 场景判 BIN)→ 文本;否则 bin。
-func imageReconClassify(bs []byte) (string, string) {
-	if name, ext, _, _ := stego.Detect(bs); name != "" && name != "BIN" {
-		return name, ext
+func imageReconClassify(bs []byte) (string, string, []byte) {
+	if name, ext, _, off := stego.Detect(bs); name != "" && name != "BIN" {
+		payload := bs
+		if off > 0 && off <= len(bs) {
+			payload = bs[off:] // 尊重 Detect 偏移,剥掉嵌入文件前的垃圾前缀
+		}
+		if cut := stego.Cut(payload, 0, name); len(cut) > 0 && len(cut) <= len(payload) {
+			payload = cut
+		}
+		return name, ext, payload
 	}
 	if imageReconIsMostlyPrintable(bs) {
-		return "文本", "txt"
+		return "文本", "txt", bs
 	}
-	return "二进制", "bin"
+	return "二进制", "bin", bs
+}
+
+// imageReconZipDelimit ZIP EOCD 定界(魔数扫描与尾部共用):末个 PK\x05\x06 + 22 + 注释长。
+func imageReconZipDelimit(buf []byte) []byte {
+	eocd := bytes.LastIndex(buf, []byte("PK\x05\x06"))
+	if eocd < 0 || eocd+22 > len(buf) {
+		return buf
+	}
+	commentLen := int(binary.LittleEndian.Uint16(buf[eocd+20 : eocd+22]))
+	end := eocd + 22 + commentLen
+	if end > len(buf) {
+		end = len(buf)
+	}
+	return buf[:end]
+}
+
+// imageReconCap 产物封顶 4MB(与 stego 引擎 MaxSave 同量级,防大文件整段导出)。
+func imageReconCap(bs []byte) []byte {
+	const maxSave = 4 << 20
+	if len(bs) > maxSave {
+		return bs[:maxSave]
+	}
+	return bs
 }
 
 func imageReconIsMostlyPrintable(bs []byte) bool {

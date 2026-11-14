@@ -22,10 +22,10 @@ import (
 // synthJPG 生成最小结构 JPG(可选熵区是否含伪 FFD9 字节填充;不合法出现)。
 func synthJPG(entropyLen int) []byte {
 	var b bytes.Buffer
-	b.Write([]byte{0xFF, 0xD8})                                    // SOI
-	b.Write([]byte{0xFF, 0xE0, 0x00, 0x10})                        // APP0 len=16
+	b.Write([]byte{0xFF, 0xD8})                                     // SOI
+	b.Write([]byte{0xFF, 0xE0, 0x00, 0x10})                         // APP0 len=16
 	b.Write([]byte("JFIF\x00\x01\x01\x00\x00\x01\x00\x01\x00\x00")) // JFIF 体
-	b.Write([]byte{0xFF, 0xDB, 0x00, 0x43})                        // DQT len=67
+	b.Write([]byte{0xFF, 0xDB, 0x00, 0x43})                         // DQT len=67
 	b.WriteByte(0x00)
 	for i := 0; i < 64; i++ {
 		b.WriteByte(byte(16 + i%8))
@@ -284,5 +284,106 @@ func TestImageReconGuguguLive(t *testing.T) {
 	}
 	if !found {
 		t.Fatal("strings 预览应含打乱 flag 串")
+	}
+}
+
+// 7.(终审修复回归)序列化契约:空集合必须是 [] 而非 null(Go nil 切片 → JSON null
+// 曾致渲染器白屏——本仓库第三次触犯,自此钉死)。
+func TestImageReconEmptyArraysNotNull(t *testing.T) {
+	tool := synthJPG(50)
+	work := t.TempDir()
+	arts := t.TempDir()
+	if err := os.WriteFile(filepath.Join(work, "c.jpg"), tool, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	tk, _ := core.DefaultRegistry.Get("misc.image_recon")
+	res, err := tk.Run(context.Background(), map[string]any{"file": "c.jpg"}, &core.ToolContext{Workdir: work, ArtifactsDir: arts})
+	if err != nil || res.Status != core.StatusSuccess {
+		t.Fatalf("运行失败: %v %s", err, res.Stderr)
+	}
+	for _, want := range []string{`"embedded":[]`, `"structure":[`, `"previews":[`, `"flags":[`} {
+		if !strings.Contains(res.Stdout, want) {
+			t.Errorf("stdout 应含 %s(nil 契约破坏):%.120s", want, res.Stdout)
+		}
+	}
+}
+
+// 8.(终审修复)尾部 = 垃圾前缀 + 迷你 JPG + 垃圾后缀:Detect 偏移剥前缀、Cut 按格式截尾,
+// artifact 应恰为迷你 JPG 本体。
+func TestImageReconTrailingOffsetAndCut(t *testing.T) {
+	mini := synthJPG(8)
+	tail := append(append([]byte("JUNKPREFIX"), mini...), []byte("TRAILINGJUNK")...)
+	file := append(synthJPG(64), tail...)
+	m, arts := reconRunTool(t, file, "t.jpg", nil)
+	if m["trailing"] == nil {
+		t.Fatal("应有尾部")
+	}
+	got, err := os.ReadFile(filepath.Join(arts, str(t, m, "trailing", "artifact")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != len(mini) {
+		t.Fatalf("artifact 应恰为嵌入 JPG 本体(%d),实际 %d(前缀未剥/尾部未截)", len(mini), len(got))
+	}
+	if got[0] != 0xFF || got[1] != 0xD8 {
+		t.Fatal("artifact 未从 JPG 魔数开始")
+	}
+}
+
+// 9.(终审修复)尾部 = ZIP:EOCD 定界同样作用于尾部,artifact 大小恰为 ZIP 本体。
+func TestImageReconTrailingZipDelimit(t *testing.T) {
+	zp := synthZIP(t)
+	file := append(synthJPG(40), append(zp, []byte("post-zip-junk-junk-junk")...)...)
+	m, arts := reconRunTool(t, file, "tz.jpg", nil)
+	got, err := os.ReadFile(filepath.Join(arts, str(t, m, "trailing", "artifact")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != len(zp) {
+		t.Fatalf("尾部 ZIP artifact 应 EOCD 定界为 %d,实际 %d", len(zp), len(got))
+	}
+	zr, err := zip.OpenReader(filepath.Join(arts, str(t, m, "trailing", "artifact")))
+	if err != nil {
+		t.Fatalf("定界后 ZIP 不可打开: %v", err)
+	}
+	zr.Close()
+}
+
+// 10.(终审修复)strings 契约:每条 ≤64 字符(长串截断)。
+func TestImageReconStringsTruncated(t *testing.T) {
+	long := bytes.Repeat([]byte("A"), 300)
+	file := append(synthJPG(30), long...)
+	m, _ := reconRunTool(t, file, "s2.jpg", nil)
+	for _, p := range m["strings"].(map[string]any)["previews"].([]any) {
+		if len(p.(string)) > 64 {
+			t.Fatalf("字符串预览应 ≤64 字符,实际 %d", len(p.(string)))
+		}
+	}
+}
+
+// 11.(终审修复)GIF 块遍历定位 trailer:尾部 ZIP 不再被 0x3B 随机命中截偏。
+func TestImageReconGIFTrailerWalk(t *testing.T) {
+	gif := append([]byte("GIF89a"), make([]byte, 7)...) // 头 13B(packed=0 无全局色表)
+	gif = append(gif, 0x3B)                             // trailer
+	zp := synthZIP(t)
+	file := append(gif, append([]byte("a;b"), zp...)...) // 垃圾含 0x3B,rfind 会截偏
+	m, _ := reconRunTool(t, file, "g.gif", nil)
+	if m["trailing"] == nil {
+		t.Fatal("GIF 应有尾部")
+	}
+	if got := num(t, m, "trailing", "size"); got != float64(len("a;b")+len(zp)) {
+		t.Fatalf("GIF 尾部大小 = %v,期望 %d(垃圾前缀+ZIP;rfind 会被 0x3B 截偏)", got, len("a;b")+len(zp))
+	}
+}
+
+// 12.(终审修复)28 字节 BM 文件不 panic(BMP bpp 越界读)。
+func TestImageReconTinyBMPNoPanic(t *testing.T) {
+	tiny := append([]byte("BM"), make([]byte, 26)...)
+	tiny = tiny[:len(tiny):len(tiny)]             // 强制 cap==len,暴露越界读(os.ReadFile 可能同样无富余)
+	binary.LittleEndian.PutUint32(tiny[18:22], 1) // w=1
+	binary.LittleEndian.PutUint32(tiny[22:26], 1) // h=1(触发 bpp 越界读路径)
+	m, _ := reconRunTool(t, tiny, "t.bmp", nil)
+	if str(t, m, "file", "format") != "BMP" {
+		t.Fatalf("小 BMP 应识别且不 panic")
 	}
 }

@@ -48,8 +48,16 @@ interface ReconReport {
 function parsePayload(data: unknown): ReconReport | null {
   try {
     const obj = typeof data === 'string' ? JSON.parse(data) : data;
-    if (obj && typeof obj === 'object' && 'file' in obj && 'structure' in obj) {
-      return obj as ReconReport;
+    if (obj && typeof obj === 'object' && 'file' in obj) {
+      // Go nil 切片 → JSON null 的防御:空集合归一为 [](本仓库已知第三次翻车点)
+      const rep = obj as ReconReport;
+      rep.structure = rep.structure ?? [];
+      rep.embedded = rep.embedded ?? [];
+      rep.strings = rep.strings ?? { count: 0, previews: [], flags: [] };
+      rep.strings.previews = rep.strings.previews ?? [];
+      rep.strings.flags = rep.strings.flags ?? [];
+      rep.artifacts = rep.artifacts ?? [];
+      return rep;
     }
     return null;
   } catch {

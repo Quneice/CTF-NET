@@ -63,8 +63,8 @@ type wavInfo struct {
 	bytesPer    int
 	sampleCount int // 采样总数(含各声道交错)
 	durationSec float64
-	samplesLE   []byte // data 块原始字节(小端)
-	samplesMask uint64 // 位深非整字节时截断
+	samplesLE   []byte         // data 块原始字节(小端)
+	samplesMask uint64         // 位深非整字节时截断
 	Chunks      []WavChunkMeta // P0 侦察:chunk 清单
 	Trailing    []byte         // P0 侦察:最后一个有效 chunk 之后/RIFF 声明范围之外的附加数据
 }
@@ -367,7 +367,7 @@ func audioLSBRun(ctx context.Context, params map[string]any, tc *core.ToolContex
 			wav.sampleRate, wav.sampleCount, wav.durationSec},
 		Params: map[string]any{"plane": planeArg, "order": orderArg, "channel": chanArg, "bits": bitsArg,
 			"spectrogram": specArg, "nperseg": npersegArg},
-		Recon: audioLSBRecon{Chunks: wav.Chunks, RawFlags: []string{}, RawStrings: []string{}},
+		Recon:      audioLSBRecon{Chunks: wav.Chunks, RawFlags: []string{}, RawStrings: []string{}},
 		Candidates: []audioLSBCandidate{},
 		Hits:       []audioLSBHit{},
 		Flags:      []string{},

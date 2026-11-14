@@ -171,7 +171,7 @@ func TestAudioLSBJpegBit0MsbAuto(t *testing.T) {
 	payload := append([]byte{0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 'J', 'F', 'I', 'F'},
 		lsbNoiseBytes(3000)...)
 	payload = append(payload[:1996], 0x12, 0x34, 0xFF, 0xD9) // 共 2000B,EOI 收尾
-	samples := lsbCarrier(20000) // 远大于 payload 所需
+	samples := lsbCarrier(20000)                             // 远大于 payload 所需
 	lsbEmbed(samples, 1, -1, 0, 1, true, payload)
 	res, arts := lsbRunTool(t, lsbBuildWav(1, 1, 16, 44100, samples), nil)
 
@@ -368,7 +368,9 @@ func TestAudioLSBErrors(t *testing.T) {
 }
 
 // LIVE. 真实题目门控测试(惯例同 SUBENUM_LIVE/JSFINDER_LIVE):
-//   AUDIO_LSB_LIVE=<hhh.wav路径> go test ./internal/tools/misc/ -run TestAudioLSBLive -v
+//
+//	AUDIO_LSB_LIVE=<hhh.wav路径> go test ./internal/tools/misc/ -run TestAudioLSBLive -v
+//
 // 预期(据 writeup):21,168,044B,16bit 单声道 @44100Hz,bit0/msb/all 命中 JPEG 9497B(FFD8FFE0…FFD9)。
 func TestAudioLSBLiveHHH(t *testing.T) {
 	live := os.Getenv("AUDIO_LSB_LIVE")
