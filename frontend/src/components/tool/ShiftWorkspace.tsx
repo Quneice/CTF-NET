@@ -21,6 +21,7 @@ import {
 
 const MODE_GROUPS: { label: string; modes: { id: ShiftMode; name: string }[] }[] = [
   { label: '值移位', modes: [{ id: 'const', name: '常数移位 ±N' }, { id: 'inc', name: '递增移位 b+i·s' }] },
+  { label: '异或', modes: [{ id: 'xor', name: 'XOR 循环密钥' }] },
   { label: '位运算', modes: [{ id: 'rol', name: 'ROL 循环左移' }, { id: 'ror', name: 'ROR 循环右移' }, { id: 'shl', name: 'SHL 左移(有损)' }, { id: 'shr', name: 'SHR 右移(有损)' }] },
   { label: '字符串', modes: [{ id: 'rotl', name: '整体左旋 k 位' }, { id: 'rotr', name: '整体右旋 k 位' }] },
 ];
@@ -102,6 +103,18 @@ function LayerCard({
             />
           </label>
         </>
+      )}
+      {mode === 'xor' && (
+        <label className="flex items-center gap-1">
+          密钥
+          <input
+            type="text"
+            value={opts.key ?? ''}
+            onChange={(e) => onChange({ key: e.target.value })}
+            placeholder="单字符=单字节 XOR;多字符=循环密钥"
+            className="w-44 rounded-md border border-slate-300 bg-white px-2 py-1 font-mono dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+          />
+        </label>
       )}
       {mode === 'const' && (
         <label className="flex items-center gap-1">

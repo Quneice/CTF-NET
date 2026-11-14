@@ -1,0 +1,1 @@
+import{j as r}from"./index-CcjeUtF9.js";import{T as s}from"./TextResult-CVvh_Tl_.js";function i({data:t}){const e=typeof t=="string"?t:JSON.stringify(t,null,2);return r.jsx(s,{text:e,filename:"result.txt"})}export{i as default};
