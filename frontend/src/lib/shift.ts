@@ -86,6 +86,22 @@ export function applyShift(input: string, o: ShiftOpts): string {
   return out;
 }
 
+/** 多层移位:自上而下依序应用(层顺序敏感) */
+export function applyLayers(input: string, layers: ShiftOpts[]): string {
+  return layers.reduce((acc, o) => applyShift(acc, o), input);
+}
+
+/** 多层整体求逆:各层求逆后逆序排列;任一层含 shl/shr(不可逆)返回 null */
+export function invertLayers(layers: ShiftOpts[]): ShiftOpts[] | null {
+  const invs: ShiftOpts[] = [];
+  for (let i = layers.length - 1; i >= 0; i--) {
+    const inv = invertShift(layers[i]);
+    if (!inv) return null;
+    invs.push(inv);
+  }
+  return invs;
+}
+
 /** 求逆变换参数;shl/shr 有损不可逆返回 null */
 export function invertShift(o: ShiftOpts): ShiftOpts | null {
   switch (o.mode) {
