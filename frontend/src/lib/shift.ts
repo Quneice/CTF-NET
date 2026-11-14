@@ -7,7 +7,16 @@
  * bruteForceShift 按「用户指定的 flag 格式串」穷举参数还原明文。
  */
 
-export type ShiftMode = 'const' | 'inc' | 'rol' | 'ror' | 'shl' | 'shr' | 'rotl' | 'rotr';
+export type ShiftMode =
+  | 'const'
+  | 'inc'
+  | 'xor'
+  | 'rol'
+  | 'ror'
+  | 'shl'
+  | 'shr'
+  | 'rotl'
+  | 'rotr';
 export type ShiftDomain = 'byte' | 'printable' | 'alpha';
 
 export interface ShiftOpts {
@@ -17,6 +26,8 @@ export interface ShiftOpts {
   n: number;
   /** 递增步长(仅 inc):第 i 位 +(n + i·s) */
   s?: number;
+  /** XOR 循环密钥(仅 xor):第 i 字节 c ^ key[i % len];空密钥 = 恒等 */
+  key?: string;
 }
 
 export interface ShiftHit {
@@ -60,6 +71,16 @@ export function applyShift(input: string, o: ShiftOpts): string {
     return o.mode === 'rotl'
       ? chars.slice(k).join('') + chars.slice(0, k).join('')
       : chars.slice(L - k).join('') + chars.slice(0, L - k).join('');
+  }
+  if (o.mode === 'xor') {
+    const key = o.key ?? '';
+    const len = key.length;
+    if (len === 0) return input;
+    let out = '';
+    for (let i = 0; i < input.length; i++) {
+      out += String.fromCharCode((input.charCodeAt(i) ^ key.charCodeAt(i % len)) & 0xff);
+    }
+    return out;
   }
   if (o.mode === 'rol' || o.mode === 'ror' || o.mode === 'shl' || o.mode === 'shr') {
     const bits = Math.max(0, Math.min(7, Math.trunc(o.n)));
@@ -109,6 +130,8 @@ export function invertShift(o: ShiftOpts): ShiftOpts | null {
       return { ...o, n: -o.n };
     case 'inc':
       return { ...o, n: -o.n, s: -(o.s ?? 1) };
+    case 'xor':
+      return { ...o }; // XOR 自逆(同层同密钥)
     case 'rol':
       return { ...o, mode: 'ror' };
     case 'ror':
@@ -137,6 +160,13 @@ export function describeShift(o: ShiftOpts): string {
       return `常数移位 N=${o.n} · ${d}`;
     case 'inc':
       return `递增移位 b=${o.n} s=${o.s ?? 1} · ${d}`;
+    case 'xor': {
+      const key = o.key ?? '';
+      if (key.length === 0) return 'XOR 空密钥(恒等)';
+      const printable = Array.from(key).every((c) => c.charCodeAt(0) >= 0x20 && c.charCodeAt(0) <= 0x7e);
+      const repr = printable ? `"${key}"` : Array.from(key, (c) => (c.charCodeAt(0) & 0xff).toString(16).padStart(2, '0')).join(' ');
+      return `XOR 循环密钥 ${repr}(len ${key.length})`;
+    }
     case 'rol':
       return `ROL 循环左移 ${o.n} 位`;
     case 'ror':
@@ -153,20 +183,26 @@ export function describeShift(o: ShiftOpts): string {
 }
 
 /**
- * 按用户指定的 flag 格式串爆破移位参数。
+ * 按用户指定的 flag 格式串爆破变换参数。
  * anywhere=false 前缀匹配;true 为包含匹配。format 为空返回 []。
- * 枚举范围:const N∈[-32,32]×3 域;inc b∈[-16,16]×s∈[-4,4]×3 域;
- * ROL/ROR、SHL/SHR n∈[1,7];字符串旋转 k∈[0, len-1]。
+ * 枚举范围:XOR 单字节 0..255;const N∈[-32,32]×3 域;inc b∈[-16,16]×s∈[-4,4]×3 域;
+ * ROL/ROR、SHL/SHR n∈[1,7];字符串旋转 k∈[0, len-1];
+ * 前缀模式下另有 XOR 循环密钥已知前缀攻击(pad[i]=cipher[i]^format[i],
+ * 最小周期归约去冗余,len 上限 min(格式长, 16);anywhere 模式仅单字节)。
  */
 export function bruteForceShift(cipher: string, format: string, anywhere: boolean): ShiftHit[] {
   if (!format) return [];
   const hits: ShiftHit[] = [];
-  const push = (opts: ShiftOpts) => {
+  const push = (opts: ShiftOpts, desc?: string) => {
     const plain = applyShift(cipher, opts);
     if (anywhere ? plain.includes(format) : plain.startsWith(format)) {
-      hits.push({ opts, plain, desc: describeShift(opts) });
+      hits.push({ opts, plain, desc: desc ?? describeShift(opts) });
     }
   };
+  // XOR 单字节全穷举(CTF 最高频)
+  for (let v = 0; v <= 255; v++) {
+    push({ mode: 'xor', domain: 'byte', n: 0, key: String.fromCharCode(v) }, `XOR 单字节 0x${v.toString(16).padStart(2, '0')}`);
+  }
   const domains: ShiftDomain[] = ['byte', 'printable', 'alpha'];
   for (const domain of domains) {
     for (let n = -32; n <= 32; n++) push({ mode: 'const', domain, n });
@@ -184,6 +220,45 @@ export function bruteForceShift(cipher: string, format: string, anywhere: boolea
   for (let k = 0; k < L; k++) {
     push({ mode: 'rotl', domain: 'byte', n: k });
     push({ mode: 'rotr', domain: 'byte', n: k });
+  }
+  // XOR 循环密钥已知前缀攻击(仅前缀模式;构造即匹配,靠周期归约与前缀一致性过滤)
+  if (!anywhere && cipher.length >= 1) {
+    const fl = Math.min(format.length, cipher.length);
+    const pad: number[] = [];
+    for (let i = 0; i < fl; i++) pad.push((cipher.charCodeAt(i) ^ format.charCodeAt(i)) & 0xff);
+    for (let keyLen = 2; keyLen <= Math.min(fl, 16); keyLen++) {
+      const keyChars = pad.slice(0, keyLen);
+      // 最小周期归约:key 存在更小周期 d 则跳过(由更短的 L 覆盖)
+      let minimal = true;
+      for (let d = 1; d < keyLen; d++) {
+        if (keyLen % d !== 0) continue;
+        let periodic = true;
+        for (let i = 0; i < keyLen; i++) {
+          if (keyChars[i] !== keyChars[i % d]) {
+            periodic = false;
+            break;
+          }
+        }
+        if (periodic) {
+          minimal = false;
+          break;
+        }
+      }
+      if (!minimal) continue;
+      // 前缀一致性:keyLen 之后的位置也须满足 pad[i] == pad[i % keyLen]
+      let consistent = true;
+      for (let i = keyLen; i < fl; i++) {
+        if (pad[i] !== pad[i % keyLen]) {
+          consistent = false;
+          break;
+        }
+      }
+      if (!consistent) continue;
+      const key = keyChars.map((c) => String.fromCharCode(c)).join('');
+      const printable = keyChars.every((c) => c >= 0x20 && c <= 0x7e);
+      const repr = printable ? `"${key}"` : keyChars.map((c) => c.toString(16).padStart(2, '0')).join(' ');
+      push({ mode: 'xor', domain: 'byte', n: 0, key }, `XOR 循环密钥 ${repr}(len ${keyLen},前缀攻击)`);
+    }
   }
   return hits;
 }
