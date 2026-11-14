@@ -4792,6 +4792,7 @@ const pentestShorthandRows: ShorthandRow[] = [
   { id: 'pentest.recon.codec-workspace', name: '编码转换', categoryId: 'pentest.recon', description: '编码、解码与加解密常用转换入口', tags: ['编码', '加解密', 'task:编解码'], preset: 'local' },
   { id: 'pentest.recon.redteam-wiki', name: '红队 Wiki', categoryId: 'pentest.recon', description: '红队常用资料、命令和脚本速查', tags: ['红队', 'Wiki', 'task:提取'], workspace: 'redteam-wiki' },
   { id: 'reverse.wiki.reverse-wiki', name: '逆向 Wiki', categoryId: 'reverse.wiki', description: '逆向知识库:常用函数、进制转换、特征识别速查与个人笔记', tags: ['逆向', 'Wiki', 'local'], workspace: 'reverse-wiki' },
+  { id: 'reverse.transform.shift', name: '移位变换', categoryId: 'reverse.transform', description: '字符串移位全家桶:常数/递增(b+i·s)/ROL·ROR/位移/循环旋转,三值域双向互逆,按 flag 格式爆破参数', tags: ['逆向', '移位', '变换', 'local'], workspace: 'shift' },
   { id: 'pentest.recon.quick-launch', name: '快捷启动', categoryId: 'pentest.recon', description: '常用外部工具的快捷启动入口', tags: ['快捷启动', '启动器', '隐藏', 'task:利用'], preset: 'local' },
   { id: 'pentest.recon.search', name: '全局搜索', categoryId: 'pentest.recon', description: '跨工具、资料与命令的全局搜索功能', tags: ['搜索', '全局', 'task:提取'], preset: 'local' },
   // —— 资产探测(10)——
