@@ -3287,6 +3287,43 @@ const fullTools: ToolDefinition[] = [
     output: { type: 'custom', rendererId: 'image-recon' },
   },
 
+  // —— 思科 Packet Tracer 工程解码（真实后端 misc.pt_decode，≤7.x 固定密钥容器）——
+  {
+    id: 'misc.other.pt-decode',
+    name: '思科 PT 文件解码',
+    categoryId: 'misc.other',
+    description:
+      '思科 Packet Tracer 工程文件（.pkt/.pka 或去后缀容器，经典 ≤7.x）一键解码：'
+      + '四层解密（整文件反转 XOR → Twofish 魔改 EAX 固定密钥 → 二次 XOR → zlib）还原拓扑 XML，'
+      + '提取 flag、password/secret/banner 配置行、PT 版本与设备名，完整 XML 落盘可下载。',
+    tags: ['思科', 'Cisco', 'PacketTracer', 'pkt', 'pka', 'Twofish', 'Misc'],
+    version: '1.0.0',
+    formColumns: 2,
+    inputSchema: [
+      {
+        type: 'note',
+        name: 'note_pt_decode',
+        label: '「纯随机」的高熵二进制附件，可能就是 PT 工程',
+        spanFull: true,
+        content:
+          '① .pkt/.pka 本身就是加密容器（密钥固定内嵌于 PT 程序），统计侧信道全灭是正常现象\n'
+          + '② 经典版本（≤7.x，如 7.3）适用本工具；PT 8.x+ 更换了加密方案，暂不支持（会有明确提示）\n'
+          + '③ 解出 XML 后自动搜 flag 与 password/secret/banner 配置行——console 密码即 flag 是常见题设\n'
+          + '④ 完整拓扑落盘 decoded.xml，可下载后人工翻设备配置/活动说明',
+      },
+      { type: 'file', name: 'file', label: 'PT 文件', accept: '.pkt,.pka,.bin,.txt,application/octet-stream' },
+    ],
+    invoke: {
+      type: 'task',
+      submitUrl: '/api/tools/misc.pt_decode/run',
+      pollUrl: '/api/tasks/{jobId}',
+      intervalMs: 1000,
+      timeoutMs: 120000,
+      realBackend: true,
+    },
+    output: { type: 'markdown' },
+  },
+
   // —— 微信 .dat 图片缓存还原（本地计算：单字节循环异或，文件头逆推密钥）——
   {
     id: 'misc.stego.wechat-dat',
