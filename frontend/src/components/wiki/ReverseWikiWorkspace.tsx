@@ -3,6 +3,7 @@
  * 数据持久化在后端 SQLite(reverse_wiki.db),浏览器模式回退 localStorage。
  */
 import WikiWorkspace from './WikiWorkspace';
+import AsciiConverter from './AsciiConverter';
 import { REVERSE_WIKI_CATEGORIES, reverseCategoryById } from '@/mock/reverseWiki';
 import {
   createReverseWikiEntry,
@@ -16,6 +17,7 @@ export default function ReverseWikiWorkspace() {
     <WikiWorkspace
       categories={REVERSE_WIKI_CATEGORIES}
       categoryById={reverseCategoryById}
+      topWidget={<AsciiConverter />}
       adapter={{
         list: listReverseWikiEntries,
         create: createReverseWikiEntry,
