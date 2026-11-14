@@ -120,7 +120,7 @@ CTF-NET/
 | data.convert | `table-merge` | CSV/Excel 表连接(inner/left/right/outer) |
 | reverse | `strings` | 可打印字符串扫描 |
 | reverse.wiki | `reverse-wiki`(工作区) | 逆向 Wiki:8 分类 44 条速查 + 进制↔ASCII 查询 + 个人笔记(reverse_wiki.db,不占工具注册表) |
-| reverse.transform | `shift`(工作区) | 移位变换:常数/递增(b+i·s)/ROL·ROR/位移/字符串旋转,三值域双向,按 flag 格式爆破(纯前端) |
+| reverse.transform | `shift`(工作区) | 移位变换(多层叠加):常数/递增(b+i·s)/ROL·ROR/位移/字符串旋转,三值域,解密=各层求逆逆序,单层按 flag 格式爆破(纯前端) |
 
 AI 工作台(仪表盘/任务详情/发现/资产 4 页)由 `ai_api.go` 绑定(ListAITasks/ControlAITask/AIStats/AIFindings/AIAssets/AIActivities)驱动,不占用工具注册表。
 
