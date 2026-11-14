@@ -1,4 +1,4 @@
-import { Briefcase, ChevronsDownUp, ChevronsUpDown, Globe, LayoutDashboard, MessageSquareText, Search, ShieldAlert, X } from 'lucide-react';
+import { Briefcase, ChevronsDownUp, ChevronsUpDown, FileSearch2, Globe, LayoutDashboard, MessageSquareText, Search, ShieldAlert, X } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 
 import CategoryTree from '@/components/category/CategoryTree';
@@ -80,7 +80,7 @@ export default function Sidebar() {
         ))}
       </div>
 
-      {/* 渗透测试模式专属：项目管理入口 */}
+      {/* 渗透测试模式专属：项目管理 + 代码审计入口 */}
       {mode === 'pentest' && (
         <div className="p-2 pb-0">
           <NavLink
@@ -95,6 +95,19 @@ export default function Sidebar() {
           >
             <Briefcase className="h-4 w-4 shrink-0" />
             项目管理
+          </NavLink>
+          <NavLink
+            to="/audit"
+            className={({ isActive }) =>
+              `mt-0.5 flex items-center gap-2 rounded-md px-2 py-1.5 text-sm ${
+                isActive
+                  ? 'bg-indigo-50 font-medium text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400'
+                  : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
+              }`
+            }
+          >
+            <FileSearch2 className="h-4 w-4 shrink-0" />
+            代码审计
           </NavLink>
         </div>
       )}

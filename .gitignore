@@ -35,3 +35,6 @@ frontend/node_modules/
 # ===== 系统文件 =====
 Thumbs.db
 .DS_Store
+
+# ===== 会话工作区(superpowers SDD 台账/评审基线,仅本地)=====
+.superpowers/

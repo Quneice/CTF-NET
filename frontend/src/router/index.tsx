@@ -7,6 +7,7 @@ import AiFindingsPage from '@/pages/AiFindingsPage';
 import AiTaskDetailPage from '@/pages/AiTaskDetailPage';
 import CategoryPage from '@/pages/CategoryPage';
 import ChatPage from '@/pages/ChatPage';
+import CodeAuditPage from '@/pages/CodeAuditPage';
 import HomePage from '@/pages/HomePage';
 import ModeSelectPage from '@/pages/ModeSelectPage';
 import ProjectDetailPage from '@/pages/ProjectDetailPage';
@@ -35,6 +36,7 @@ export const router = createBrowserRouter([
       { index: true, element: <HomePage /> },
       { path: 'projects', element: <ProjectsPage /> },
       { path: 'projects/:id', element: <ProjectDetailPage /> },
+      { path: 'audit', element: <CodeAuditPage /> },
       { path: 'ai-chat', element: <ChatPage /> },
       { path: 'ai-dashboard', element: <AiDashboardPage /> },
       { path: 'ai-task/:id', element: <AiTaskDetailPage /> },

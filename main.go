@@ -11,6 +11,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 	wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"
 
+	"ctfnet/internal/audit"
 	"ctfnet/internal/core"
 	"ctfnet/internal/projects"
 	_ "ctfnet/internal/tools" // 触发所有工具插件 init() 注册
@@ -36,6 +37,15 @@ func main() {
 	} else {
 		projectStore = ps
 		defer projectStore.Close()
+	}
+
+	// 代码审计库（SQLite + audits/ 文件区）：打开失败仅禁用代码审计工作区
+	var auditStore *audit.Store
+	if as, err := audit.Open(filepath.Join(cfg.DataDir, "audit.db"), filepath.Join(cfg.DataDir, "audits")); err != nil {
+		log.Printf("[CTF-NET] 代码审计库打开失败（代码审计不可用）: %v", err)
+	} else {
+		auditStore = as
+		defer auditStore.Close()
 	}
 
 	// 红队 Wiki 库（SQLite）：打开失败仅禁用 Wiki；首次打开时灌入内置速查数据
@@ -74,6 +84,7 @@ func main() {
 		Files:    fileStore,
 		Projects: projectStore,
 		Wiki:     wikiStore,
+		Audit:    auditStore,
 		Cfg:      cfg,
 	}
 

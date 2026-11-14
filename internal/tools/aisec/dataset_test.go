@@ -100,7 +100,7 @@ func TestDatasetScanRunEndToEnd(t *testing.T) {
 	mkJSONL(t, path)
 	var prog []int
 	res, err := datasetScanRun(context.Background(), map[string]any{
-		"file": []any{"d.jsonl"},
+		"file":  []any{"d.jsonl"},
 		"ngram": 3, "min_freq": 2, "lift_threshold": 2.0, "top_k": 20,
 	}, &core.ToolContext{Workdir: dir, ReportProgress: func(p int, m string) { prog = append(prog, p) }})
 	if err != nil {

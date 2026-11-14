@@ -652,6 +652,127 @@ export namespace aiagent {
 
 }
 
+export namespace audit {
+	
+	export class FileNode {
+	    path: string;
+	    size: number;
+	    is_dir: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new FileNode(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.path = source["path"];
+	        this.size = source["size"];
+	        this.is_dir = source["is_dir"];
+	    }
+	}
+	export class ImportFile {
+	    ID: string;
+	    Name: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ImportFile(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.ID = source["ID"];
+	        this.Name = source["Name"];
+	    }
+	}
+	export class Project {
+	    id: string;
+	    name: string;
+	    files: number;
+	    created_at: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new Project(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.name = source["name"];
+	        this.files = source["files"];
+	        this.created_at = source["created_at"];
+	    }
+	}
+	export class SearchHit {
+	    path: string;
+	    line_no: number;
+	    line: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new SearchHit(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.path = source["path"];
+	        this.line_no = source["line_no"];
+	        this.line = source["line"];
+	    }
+	}
+	export class SensHit {
+	    path: string;
+	    line_no: number;
+	    line: string;
+	    match: string;
+	    func_id: string;
+	    language: string;
+	    pattern: string;
+	    category: string;
+	    risk: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new SensHit(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.path = source["path"];
+	        this.line_no = source["line_no"];
+	        this.line = source["line"];
+	        this.match = source["match"];
+	        this.func_id = source["func_id"];
+	        this.language = source["language"];
+	        this.pattern = source["pattern"];
+	        this.category = source["category"];
+	        this.risk = source["risk"];
+	    }
+	}
+	export class SensitiveFunc {
+	    id: string;
+	    language: string;
+	    pattern: string;
+	    category: string;
+	    risk: string;
+	    note: string;
+	    enabled: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new SensitiveFunc(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.language = source["language"];
+	        this.pattern = source["pattern"];
+	        this.category = source["category"];
+	        this.risk = source["risk"];
+	        this.note = source["note"];
+	        this.enabled = source["enabled"];
+	    }
+	}
+
+}
+
 export namespace core {
 	
 	export class AiConfig {

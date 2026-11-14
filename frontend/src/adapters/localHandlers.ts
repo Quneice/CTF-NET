@@ -1686,6 +1686,214 @@ localHandlerRegistry.register('local.rsa-nth-root', (params) => {
 });
 
 // ---------------------------------------------------------------------------
+// RSA · 共模攻击（同一 n，两组互素指数加密同一明文）
+// ---------------------------------------------------------------------------
+
+/** 模快速幂：base^exp mod m（平方-乘，指数与底数均为 BigInt） */
+function modPow(base: bigint, exp: bigint, mod: bigint): bigint {
+  if (mod === 1n) return 0n;
+  let result = 1n;
+  let b = ((base % mod) + mod) % mod;
+  let e = exp;
+  while (e > 0n) {
+    if (e & 1n) result = (result * b) % mod;
+    b = (b * b) % mod;
+    e >>= 1n;
+  }
+  return result;
+}
+
+/** 扩展欧几里得：返回 [g, x, y] 使 a*x + b*y = g = gcd(a, b) */
+function extGcdBig(a: bigint, b: bigint): [bigint, bigint, bigint] {
+  if (b === 0n) return [a, 1n, 0n];
+  const [g, x1, y1] = extGcdBig(b, a % b);
+  return [g, y1, x1 - (a / b) * y1];
+}
+
+/** 模逆：a^-1 mod n（gcd != 1 时抛错） */
+function modInverse(a: bigint, n: bigint): bigint {
+  const [g, x] = extGcdBig(((a % n) + n) % n, n);
+  if (g !== 1n) throw new Error(`模逆不存在（gcd = ${g} ≠ 1）`);
+  return ((x % n) + n) % n;
+}
+
+/** 尝试把明文字节解码为可打印 UTF-8 文本（flag 常见形态），不可打印返回 null */
+function bigIntToUtf8(v: bigint): string | null {
+  const bytes = bigIntToBytes(v);
+  if (bytes.length === 0) return null;
+  try {
+    const s = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+    return /^[\x20-\x7e -￿\t]+$/.test(s) ? s : null;
+  } catch {
+    return null;
+  }
+}
+
+/** 读取并解析表单大整数参数（十进制 / 0x 十六进制），返回值或错误消息（RSA 族工具共用） */
+function parseBigIntParam(params: FormValues, name: string, label: string): { v: bigint } | { err: string } {
+  const raw = String(params[name] ?? '').trim();
+  if (!raw) return { err: `请输入 ${label}` };
+  try {
+    return { v: parseBigIntInput(raw) };
+  } catch {
+    return { err: `无法解析 ${label}：请输入十进制整数或 0x 前缀的十六进制整数` };
+  }
+}
+
+localHandlerRegistry.register('local.rsa-common-modulus', (params) => {
+  const parsedN = parseBigIntParam(params, 'n', '模数 n');
+  if ('err' in parsedN) return parsedN.err;
+  if (parsedN.v <= 1n) return 'n 必须大于 1';
+  const parsedE1 = parseBigIntParam(params, 'e1', '公钥指数 e1');
+  if ('err' in parsedE1) return parsedE1.err;
+  const parsedC1 = parseBigIntParam(params, 'c1', '密文 c1');
+  if ('err' in parsedC1) return parsedC1.err;
+  const parsedE2 = parseBigIntParam(params, 'e2', '公钥指数 e2');
+  if ('err' in parsedE2) return parsedE2.err;
+  const parsedC2 = parseBigIntParam(params, 'c2', '密文 c2');
+  if ('err' in parsedC2) return parsedC2.err;
+
+  const n = parsedN.v;
+  const e1 = parsedE1.v;
+  const c1 = parsedC1.v;
+  const e2 = parsedE2.v;
+  const c2 = parsedC2.v;
+  if (e1 <= 0n || e2 <= 0n) return 'e1、e2 必须为正整数';
+
+  // gcd 判定：共模攻击要求 e1、e2 互素
+  const [g, s1, s2] = extGcdBig(e1, e2);
+  if (g !== 1n) {
+    return [
+      `gcd(e1, e2) = ${g} ≠ 1，标准共模攻击不适用。`,
+      '',
+      `此时只能得到 m^${g} mod n，还需对结果开 ${g} 次方根（如 g=2 时用开平方/iroot），成功率取决于 m 的结构。`,
+      '提示：确认两组密文确实用同一 n 加密同一明文，且 e1、e2 输入无误。',
+    ].join('\n');
+  }
+
+  // m = c1^s1 · c2^s2 mod n；负指数先取模逆再取正幂
+  try {
+    const term1 = s1 >= 0n ? modPow(c1, s1, n) : modPow(modInverse(c1, n), -s1, n);
+    const term2 = s2 >= 0n ? modPow(c2, s2, n) : modPow(modInverse(c2, n), -s2, n);
+    const m = (term1 * term2) % n;
+
+    // 自验证：恢复的 m 应能重新加密出两组密文
+    const ok1 = modPow(m, e1, n) === ((c1 % n) + n) % n;
+    const ok2 = modPow(m, e2, n) === ((c2 % n) + n) % n;
+
+    const lines: string[] = [];
+    lines.push(`gcd(e1, e2) = 1 ✓   系数：s1 = ${s1}，s2 = ${s2}（s1·e1 + s2·e2 = 1）`);
+    lines.push('');
+    lines.push(`明文 m（十进制）= ${m.toString()}`);
+    lines.push(`明文 m（十六进制）= 0x${m.toString(16)}`);
+    const text = bigIntToUtf8(m);
+    if (text) {
+      lines.push(`明文 m（UTF-8）= ${text}`);
+    }
+    lines.push('');
+    lines.push(`验证：m^e1 mod n == c1 ${ok1 ? '✓' : '✗'}；m^e2 mod n == c2 ${ok2 ? '✓' : '✗'}`);
+    if (!ok1 || !ok2) {
+      lines.push('验证未通过：两组密文可能并非同一明文、或模数 n 不一致。');
+    }
+    return lines.join('\n');
+  } catch (e) {
+    return `计算失败：${e instanceof Error ? e.message : String(e)}（密文与 n 不互素时无法对负指数取模逆）`;
+  }
+});
+
+// ---------------------------------------------------------------------------
+// RSA · Wiener 攻击（e 大 d 小：连分数展开 e/n 恢复 p、q、d）
+// ---------------------------------------------------------------------------
+
+localHandlerRegistry.register('local.rsa-wiener', (params) => {
+  const parsedN = parseBigIntParam(params, 'n', '模数 n');
+  if ('err' in parsedN) return parsedN.err;
+  if (parsedN.v <= 1n) return 'n 必须大于 1';
+  const parsedE = parseBigIntParam(params, 'e', '公钥指数 e');
+  if ('err' in parsedE) return parsedE.err;
+  if (parsedE.v <= 1n) return 'e 必须大于 1';
+  const n = parsedN.v;
+  const e = parsedE.v;
+
+  // 密文可选：提供则同时解出明文
+  let c: bigint | null = null;
+  if (String(params.c ?? '').trim()) {
+    const parsedC = parseBigIntParam(params, 'c', '密文 c');
+    if ('err' in parsedC) return parsedC.err;
+    c = parsedC.v;
+  }
+
+  // 连分数展开 e/n，逐渐近分数 k/d 验证：
+  // k | (e·d − 1) 且 φ = (e·d − 1)/k 满足 (p+q)² − 4n 为完全平方 → 反解 p、q
+  let num2 = 0n;
+  let num1 = 1n; // 渐近分子 h[i-2], h[i-1]
+  let den2 = 1n;
+  let den1 = 0n; // 渐近分母 k[i-2], k[i-1]
+  let a = e;
+  let b = n;
+  let found: { k: bigint; d: bigint; phi: bigint; p: bigint; q: bigint } | null = null;
+  let steps = 0;
+  while (b > 0n && !found) {
+    const q = a / b;
+    const num = q * num1 + num2;
+    const den = q * den1 + den2;
+    num2 = num1;
+    num1 = num;
+    den2 = den1;
+    den1 = den;
+    steps++;
+    if (num > 0n && (e * den - 1n) % num === 0n) {
+      const phi = (e * den - 1n) / num;
+      const s = n - phi + 1n; // p + q
+      const disc = s * s - 4n * n; // (p − q)²
+      if (disc >= 0n) {
+        const root = bigIntSqrt(disc);
+        if (root * root === disc && (s + root) % 2n === 0n) {
+          const p = (s + root) / 2n;
+          const q2 = (s - root) / 2n;
+          if (p * q2 === n) found = { k: num, d: den, phi, p, q: q2 };
+        }
+      }
+    }
+    [a, b] = [b, a % b];
+  }
+
+  if (!found) {
+    return [
+      `连分数展开 e/n 共验证 ${steps} 个渐近分数，均不成立 —— Wiener 攻击失败。`,
+      '',
+      '常见原因：d 不够小。Wiener 适用条件：d < n^(1/4)/3（通常还要求 q < p < 2q）。',
+      '可尝试：|p−q| 小 → 「|p-q| 小 · Fermat 分解」；e 小且明文小 → 低加密指数开根；已知 p/q → 直接解密。',
+    ].join('\n');
+  }
+
+  const { k, d, phi, p, q } = found;
+  const lines: string[] = [];
+  lines.push(`第 ${steps} 个渐近分数命中：k/d = ${k}/${d}`);
+  lines.push('');
+  lines.push(`p = ${p.toString()}`);
+  lines.push(`q = ${q.toString()}`);
+  lines.push(`φ(n) = ${phi.toString()}`);
+  lines.push(`私钥 d = ${d.toString()}`);
+  lines.push('');
+  lines.push(
+    `验证：p·q == n ${p * q === n ? '✓' : '✗'}；e·d − 1 = ${k}·φ ${k * phi === e * d - 1n ? '✓' : '✗'}`,
+  );
+
+  if (c !== null) {
+    const m = modPow(c, d, n);
+    lines.push('');
+    lines.push(`明文 m（十进制）= ${m.toString()}`);
+    lines.push(`明文 m（十六进制）= 0x${m.toString(16)}`);
+    const text = bigIntToUtf8(m);
+    if (text) lines.push(`明文 m（UTF-8）= ${text}`);
+    const ok = modPow(m, e, n) === ((c % n) + n) % n;
+    lines.push(`验证 m^e mod n == c：${ok ? '✓' : '✗'}`);
+  }
+  return lines.join('\n');
+});
+
+// ---------------------------------------------------------------------------
 // Web · PHP 反序列化 PoC 生成（解析/序列化逻辑见 lib/phpSerialize.ts）
 // ---------------------------------------------------------------------------
 

@@ -63,7 +63,7 @@ func fileParam(params map[string]any, key string) []string {
 
 // finding 单条发现。
 type finding struct {
-	Kind     string `json:"kind"`     // import / string / member / info
+	Kind     string `json:"kind"` // import / string / member / info
 	Value    string `json:"value"`
 	Severity string `json:"severity"` // dangerous / suspicious / info
 	Where    string `json:"where"`    // 所在成员(顶层 pickle 为空)
@@ -81,22 +81,22 @@ type fileReport struct {
 // —— 危险函数对(module -> name 集合) ——
 
 var dangerousPairs = map[string]map[string]bool{
-	"os":              {"system": true, "popen": true, "remove": true, "unlink": true, "rmdir": true, "removedirs": true, "execv": true, "execl": true, "spawnv": true},
-	"subprocess":      {"Popen": true, "call": true, "run": true, "check_output": true, "check_call": true, "getoutput": true},
-	"builtins":        {"eval": true, "exec": true, "compile": true, "__import__": true},
-	"marshal":         {"loads": true},
-	"pickle":          {"loads": true},
-	"ctypes":          {"CDLL": true, "WinDLL": true, "PyDLL": true},
-	"socket":          {"socket": true, "connect": true, "create_connection": true, "send": true, "recv": true},
-	"requests":        {"get": true, "post": true},
-	"urllib.request":  {"urlopen": true, "urlretrieve": true},
-	"http.client":     {"HTTPSConnection": true, "HTTPConnection": true},
-	"ftplib":          {"FTP": true},
-	"smtplib":         {"SMTP": true, "SMTP_SSL": true},
-	"shutil":          {"rmtree": true, "copy": true, "move": true},
-	"base64":          {"b64decode": true},
-	"pathlib":         {"unlink": true, "rmdir": true},
-	"posix":           {"system": true},
+	"os":               {"system": true, "popen": true, "remove": true, "unlink": true, "rmdir": true, "removedirs": true, "execv": true, "execl": true, "spawnv": true},
+	"subprocess":       {"Popen": true, "call": true, "run": true, "check_output": true, "check_call": true, "getoutput": true},
+	"builtins":         {"eval": true, "exec": true, "compile": true, "__import__": true},
+	"marshal":          {"loads": true},
+	"pickle":           {"loads": true},
+	"ctypes":           {"CDLL": true, "WinDLL": true, "PyDLL": true},
+	"socket":           {"socket": true, "connect": true, "create_connection": true, "send": true, "recv": true},
+	"requests":         {"get": true, "post": true},
+	"urllib.request":   {"urlopen": true, "urlretrieve": true},
+	"http.client":      {"HTTPSConnection": true, "HTTPConnection": true},
+	"ftplib":           {"FTP": true},
+	"smtplib":          {"SMTP": true, "SMTP_SSL": true},
+	"shutil":           {"rmtree": true, "copy": true, "move": true},
+	"base64":           {"b64decode": true},
+	"pathlib":          {"unlink": true, "rmdir": true},
+	"posix":            {"system": true},
 	"subprocess_patch": {"Popen": true}, // 少见但保留防御
 }
 

@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
-import { X } from 'lucide-react';
+import { ArrowLeft, X } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import { getToolById } from '@/mock';
+import { getCategoryById, getToolById } from '@/mock';
 import ToolPage from '@/pages/ToolPage';
 import { useToolTabsStore } from '@/stores/useToolTabsStore';
 
@@ -36,10 +36,31 @@ export default function ToolTabsWorkspace() {
     }
   };
 
+  // 返回按钮：跳到当前工具所属的分类选择页（工具标签保持打开，运行状态不丢）。
+  // 确定性导航而非 navigate(-1)：多开标签/收藏/命令面板进入时浏览器历史不可靠，
+  // 固定回「该工具的选择页」始终符合预期；分类未知时退回首页。
+  const activeTool = toolId ? getToolById(toolId) : undefined;
+  const activeCategory = activeTool ? getCategoryById(activeTool.categoryId) : undefined;
+
+  const handleBack = () => {
+    navigate(activeCategory ? `/c/${activeCategory.id}` : '/');
+  };
+
   return (
     <div className="flex min-h-full flex-col">
       {/* 标签栏 */}
       <div className="sticky top-0 z-10 flex shrink-0 items-center gap-0.5 overflow-x-auto border-b border-slate-200 bg-white px-2 pt-1.5 dark:border-slate-800 dark:bg-slate-900">
+        {/* 返回按钮：标签栏常驻可见，工具页滚动到任意位置都能一键回到选择页 */}
+        <button
+          type="button"
+          onClick={handleBack}
+          title={`返回「${activeCategory?.name ?? '首页'}」（工具标签保持打开）`}
+          aria-label={`返回${activeCategory?.name ?? '首页'}`}
+          className="mr-1 flex max-w-40 shrink-0 items-center gap-1 rounded-md border-r border-slate-200 px-2 py-1 text-sm text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+        >
+          <ArrowLeft className="h-4 w-4 shrink-0" />
+          <span className="truncate">{activeCategory?.name ?? '首页'}</span>
+        </button>
         {openTabs.map((id) => {
           const tool = getToolById(id);
           const active = id === toolId;

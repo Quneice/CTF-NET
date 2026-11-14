@@ -65,7 +65,7 @@ export default function AppLayout() {
         <Sidebar />
       </aside>
 
-      {/* 二级侧边栏：展示当前分类的下一层内容 */}
+      {/* 二级侧边栏：仅漏洞浏览器工具页使用（案例清单）；其余页面与分类页内容重复，已移除 */}
       <SecondarySidebar />
 
       {/* 移动端抽屉 */}

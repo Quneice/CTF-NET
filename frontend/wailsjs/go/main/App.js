@@ -18,6 +18,34 @@ export function AIStats() {
   return window['go']['main']['App']['AIStats']();
 }
 
+export function AddSensitiveFunc(arg1, arg2, arg3, arg4, arg5, arg6) {
+  return window['go']['main']['App']['AddSensitiveFunc'](arg1, arg2, arg3, arg4, arg5, arg6);
+}
+
+export function AuditFileTree(arg1) {
+  return window['go']['main']['App']['AuditFileTree'](arg1);
+}
+
+export function AuditImport(arg1, arg2) {
+  return window['go']['main']['App']['AuditImport'](arg1, arg2);
+}
+
+export function AuditReadFile(arg1, arg2) {
+  return window['go']['main']['App']['AuditReadFile'](arg1, arg2);
+}
+
+export function AuditScan(arg1) {
+  return window['go']['main']['App']['AuditScan'](arg1);
+}
+
+export function AuditSearch(arg1, arg2, arg3, arg4, arg5) {
+  return window['go']['main']['App']['AuditSearch'](arg1, arg2, arg3, arg4, arg5);
+}
+
+export function AuditWriteFile(arg1, arg2, arg3) {
+  return window['go']['main']['App']['AuditWriteFile'](arg1, arg2, arg3);
+}
+
 export function CloseSession(arg1) {
   return window['go']['main']['App']['CloseSession'](arg1);
 }
@@ -46,6 +74,10 @@ export function CreateWikiEntry(arg1, arg2, arg3) {
   return window['go']['main']['App']['CreateWikiEntry'](arg1, arg2, arg3);
 }
 
+export function DeleteAuditProject(arg1) {
+  return window['go']['main']['App']['DeleteAuditProject'](arg1);
+}
+
 export function DeleteChatSession(arg1) {
   return window['go']['main']['App']['DeleteChatSession'](arg1);
 }
@@ -56,6 +88,10 @@ export function DeleteEntry(arg1) {
 
 export function DeleteProject(arg1) {
   return window['go']['main']['App']['DeleteProject'](arg1);
+}
+
+export function DeleteSensitiveFunc(arg1) {
+  return window['go']['main']['App']['DeleteSensitiveFunc'](arg1);
 }
 
 export function DeleteVulnCase(arg1) {
@@ -170,6 +206,10 @@ export function ListAITasks() {
   return window['go']['main']['App']['ListAITasks']();
 }
 
+export function ListAuditProjects() {
+  return window['go']['main']['App']['ListAuditProjects']();
+}
+
 export function ListChatSessions() {
   return window['go']['main']['App']['ListChatSessions']();
 }
@@ -184,6 +224,10 @@ export function ListEntries(arg1, arg2) {
 
 export function ListProjects() {
   return window['go']['main']['App']['ListProjects']();
+}
+
+export function ListSensitiveFuncs() {
+  return window['go']['main']['App']['ListSensitiveFuncs']();
 }
 
 export function ListVulnCases(arg1, arg2) {
@@ -228,6 +272,10 @@ export function UpdateEntry(arg1, arg2, arg3, arg4) {
 
 export function UpdateProject(arg1, arg2) {
   return window['go']['main']['App']['UpdateProject'](arg1, arg2);
+}
+
+export function UpdateSensitiveFunc(arg1, arg2, arg3, arg4, arg5, arg6, arg7) {
+  return window['go']['main']['App']['UpdateSensitiveFunc'](arg1, arg2, arg3, arg4, arg5, arg6, arg7);
 }
 
 export function UpdateVulnCase(arg1, arg2) {

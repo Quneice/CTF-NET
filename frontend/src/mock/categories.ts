@@ -92,6 +92,8 @@ export const categories: CategoryNode[] = [
       // 2 条子分类路由保留;侧边栏 L2 节点保留。
       { id: 'misc.demo', name: '示例演示', icon: 'PlayCircle', segment: true },
       { id: 'misc.report', name: '报告 / 工具', icon: 'FileText' },
+      // 音频隐写:WAV LSB 位平面提取等(2026-11 新增,入口卡片形式,工具挂 misc.audio)
+      { id: 'misc.audio', name: '音频隐写', icon: 'Music', description: 'WAV LSB 位平面隐写提取与类型自动识别' },
       { id: 'misc.other', name: '其他', icon: 'MoreHorizontal', segment: true },
     ],
   },
@@ -232,6 +234,7 @@ export const categories: CategoryNode[] = [
   // 与 pentest.* 同级顶级节点，模型安全模式可见。
   { id: 'aisec.jailbreak', name: '越狱攻击', icon: 'Bomb', description: '模型安全·越狱与安全边界测试' },
   { id: 'aisec.injection', name: '提示注入', icon: 'MessageSquareText', description: '模型安全·提示注入与指令劫持' },
-  { id: 'aisec.poison', name: '数据投毒', icon: 'Database', description: '模型安全·训练数据投毒筛查' },
+  { id: 'aisec.poison', name: '数据投毒', icon: 'Database', description: '模型安全·投毒筛查与后门样本生成' },
   { id: 'aisec.backdoor', name: '模型后门', icon: 'HardDrive', description: '模型安全·模型文件后门与恶意载荷检测' },
+  { id: 'aisec.adversarial', name: '对抗样本', icon: 'Swords', description: '模型安全·对抗样本生成与鲁棒性评估' },
 ];

@@ -15,14 +15,11 @@ interface CategoryState {
   expandedIds: Set<string>;
   /** 侧边栏搜索关键字（阶段 2 联动） */
   searchKeyword: string;
-  /** 最近一次选中的分类（二级侧边栏锚定用，进入工具页时保持不变） */
-  selectedCategoryId: string | undefined;
 
   toggleExpanded: (id: string) => void;
   expandAll: () => void;
   collapseAll: () => void;
   setSearchKeyword: (kw: string) => void;
-  setSelectedCategoryId: (id: string | undefined) => void;
 }
 
 /** 收集整棵树所有节点的 id（用于"全部展开"） */
@@ -45,7 +42,6 @@ export const useCategoryStore = create<CategoryState>((set) => ({
   categories,
   expandedIds: defaultExpanded,
   searchKeyword: '',
-  selectedCategoryId: undefined,
 
   toggleExpanded: (id) =>
     set((state) => {
@@ -60,6 +56,4 @@ export const useCategoryStore = create<CategoryState>((set) => ({
   collapseAll: () => set({ expandedIds: new Set<string>() }),
 
   setSearchKeyword: (kw) => set({ searchKeyword: kw }),
-
-  setSelectedCategoryId: (id) => set({ selectedCategoryId: id }),
 }));

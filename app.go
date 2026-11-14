@@ -9,6 +9,7 @@ import (
 	"os"
 	"time"
 
+	"ctfnet/internal/audit"
 	"ctfnet/internal/core"
 	"ctfnet/internal/projects"
 	"ctfnet/internal/wiki"
@@ -92,6 +93,7 @@ type App struct {
 	Projects *projects.Store // 渗透测试项目管理（projects.go）
 	Wiki     *wiki.Store     // 红队 Wiki（wiki.go）
 	Cfg      *core.Config    // 统一应用配置（config_api.go）
+	Audit    *audit.Store   // 代码审计工作区（audit_api.go）
 
 	ctx context.Context // Wails 应用上下文（OnStartup 注入，流式事件推送用）
 }

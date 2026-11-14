@@ -65,13 +65,14 @@ export const MODE_CONFIG: Record<AppMode, ModeInfo> = {
   modelsec: {
     label: '模型安全',
     icon: 'ShieldCheck',
-    description: '大模型安全测试：越狱攻击、提示注入、训练数据投毒、模型后门检测，共享编码工具',
-    // 模型安全域 4 个顶级分类 + 共享的编码工具
+    description: '大模型安全测试：越狱攻击、提示注入、训练数据投毒、模型后门、对抗样本，共享编码工具',
+    // 模型安全域 5 个顶级分类 + 共享的编码工具
     categoryRoots: [
       'aisec.jailbreak',
       'aisec.injection',
       'aisec.poison',
       'aisec.backdoor',
+      'aisec.adversarial',
       'codec',
     ],
   },
