@@ -66,6 +66,10 @@ export function CreateProject(arg1) {
   return window['go']['main']['App']['CreateProject'](arg1);
 }
 
+export function CreateReverseWikiEntry(arg1, arg2, arg3) {
+  return window['go']['main']['App']['CreateReverseWikiEntry'](arg1, arg2, arg3);
+}
+
 export function CreateVulnCase(arg1, arg2, arg3, arg4) {
   return window['go']['main']['App']['CreateVulnCase'](arg1, arg2, arg3, arg4);
 }
@@ -88,6 +92,10 @@ export function DeleteEntry(arg1) {
 
 export function DeleteProject(arg1) {
   return window['go']['main']['App']['DeleteProject'](arg1);
+}
+
+export function DeleteReverseWikiEntry(arg1) {
+  return window['go']['main']['App']['DeleteReverseWikiEntry'](arg1);
 }
 
 export function DeleteSensitiveFunc(arg1) {
@@ -226,6 +234,10 @@ export function ListProjects() {
   return window['go']['main']['App']['ListProjects']();
 }
 
+export function ListReverseWikiEntries(arg1) {
+  return window['go']['main']['App']['ListReverseWikiEntries'](arg1);
+}
+
 export function ListSensitiveFuncs() {
   return window['go']['main']['App']['ListSensitiveFuncs']();
 }
@@ -272,6 +284,10 @@ export function UpdateEntry(arg1, arg2, arg3, arg4) {
 
 export function UpdateProject(arg1, arg2) {
   return window['go']['main']['App']['UpdateProject'](arg1, arg2);
+}
+
+export function UpdateReverseWikiEntry(arg1, arg2, arg3) {
+  return window['go']['main']['App']['UpdateReverseWikiEntry'](arg1, arg2, arg3);
 }
 
 export function UpdateSensitiveFunc(arg1, arg2, arg3, arg4, arg5, arg6, arg7) {

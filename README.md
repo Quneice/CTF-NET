@@ -17,6 +17,7 @@
 - **代码审计工作台**(渗透测试模式侧边栏,SQLite `audit.db` + `audits/<id>/` 文件区):导入整个项目文件夹(保留目录结构)→ 文件树浏览 / 查看 / **在线编辑保存**(首次修改自动 `.bak` 备份)/ 全文搜索(plain+正则+大小写)→ **敏感函数规则库驱动的高亮与全项目扫描**(内置 40+ 条 PHP/Java/Python/JS/Go/通用规则:命令执行、SQL 注入、反序列化、JNDI/XXE/SSTI/SSRF、硬编码凭据/AWS Key/私钥等,支持增删改与启用停用,即时生效)。
 - **项目库**(SQLite):渗透项目 CRUD + 项目内条目(记录/资产/漏洞等 kind),时间戳自动维护。
 - **红队 Wiki**(SQLite):内置速查库(反弹 Shell、提权、隧道等分类),支持自定义增删改。
+- **逆向 Wiki**(SQLite,逆向模式):8 分类速查(算法特征 / 工具操作 / 反调试 / 壳与脱壳 / 文件格式 / **常用函数**(MSVC CRT·Win32·libc 见名知义)/ 进制 ASCII / 套路笔记)+ 顶部「进制↔ASCII 即时查询条」(0x64↔d、批量双向、URL 形态),支持自定义增删改。
 - **漏洞库浏览器**(SQLite):内置数千条真实漏洞案例、数十个分类,全文检索,支持自定义 CRUD(删除自动进 backups 备份),远程图片经全局代理拉取。
 - **指纹管理库**:内置 1.3 万+ CMS 指纹(go:embed),首次启动播种到数据目录,支持增删改与关联已知漏洞;Web 指纹识别工具实时消费。
 - **设置中心**:全局代理(自动映射到 fscan/jsfinder/子域被动源/AI 请求)、外部工具路径(fscan/nmap/sqlmap/xray/nuclei/python3 等)、AI 接口配置、FRP/JNDI 服务器配置。
@@ -118,6 +119,7 @@ CTF-NET/
 | data.crawl | `packet-crawler` | Burp 原始请求包占位符批量请求(区间/枚举占位符,文本响应链接下钻一层) |
 | data.convert | `table-merge` | CSV/Excel 表连接(inner/left/right/outer) |
 | reverse | `strings` | 可打印字符串扫描 |
+| reverse.wiki | `reverse-wiki`(工作区) | 逆向 Wiki:8 分类速查 + 进制↔ASCII 查询 + 个人笔记(reverse_wiki.db,不占工具注册表) |
 
 AI 工作台(仪表盘/任务详情/发现/资产 4 页)由 `ai_api.go` 绑定(ListAITasks/ControlAITask/AIStats/AIFindings/AIAssets/AIActivities)驱动,不占用工具注册表。
 

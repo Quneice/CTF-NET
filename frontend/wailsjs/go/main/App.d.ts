@@ -3,8 +3,8 @@
 import {aiagent} from '../models';
 import {audit} from '../models';
 import {projects} from '../models';
-import {vulnlib} from '../models';
 import {wiki} from '../models';
+import {vulnlib} from '../models';
 import {main} from '../models';
 import {pentest} from '../models';
 import {core} from '../models';
@@ -41,6 +41,8 @@ export function CreateEntry(arg1:string,arg2:string,arg3:string,arg4:string,arg5
 
 export function CreateProject(arg1:projects.ProjectInput):Promise<projects.Project>;
 
+export function CreateReverseWikiEntry(arg1:string,arg2:string,arg3:string):Promise<wiki.Entry>;
+
 export function CreateVulnCase(arg1:string,arg2:string,arg3:string,arg4:string):Promise<vulnlib.ScanSummary>;
 
 export function CreateWikiEntry(arg1:string,arg2:string,arg3:string):Promise<wiki.Entry>;
@@ -52,6 +54,8 @@ export function DeleteChatSession(arg1:string):Promise<void>;
 export function DeleteEntry(arg1:string):Promise<void>;
 
 export function DeleteProject(arg1:string):Promise<void>;
+
+export function DeleteReverseWikiEntry(arg1:string):Promise<void>;
 
 export function DeleteSensitiveFunc(arg1:string):Promise<void>;
 
@@ -121,6 +125,8 @@ export function ListEntries(arg1:string,arg2:string):Promise<Array<projects.Entr
 
 export function ListProjects():Promise<Array<projects.Project>>;
 
+export function ListReverseWikiEntries(arg1:string):Promise<Array<wiki.Entry>>;
+
 export function ListSensitiveFuncs():Promise<Array<audit.SensitiveFunc>>;
 
 export function ListVulnCases(arg1:string,arg2:string):Promise<Array<vulnlib.CaseSummary>>;
@@ -144,6 +150,8 @@ export function UpdateAppConfig(arg1:core.AppConfig):Promise<void>;
 export function UpdateEntry(arg1:string,arg2:string,arg3:string,arg4:string):Promise<projects.Entry>;
 
 export function UpdateProject(arg1:string,arg2:projects.ProjectInput):Promise<projects.Project>;
+
+export function UpdateReverseWikiEntry(arg1:string,arg2:string,arg3:string):Promise<wiki.Entry>;
 
 export function UpdateSensitiveFunc(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string,arg6:string,arg7:boolean):Promise<void>;
 
