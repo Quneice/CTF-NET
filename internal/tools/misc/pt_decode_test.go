@@ -43,6 +43,9 @@ func TestPTDecodeGolden(t *testing.T) {
 	if !strings.Contains(res.Stdout, "7.3.0.0838") {
 		t.Fatalf("报告应含 PT 版本")
 	}
+	if !strings.Contains(res.Stdout, "设备(") {
+		t.Fatalf("报告应含设备清单(真实 PT XML 用大写 <NAME translate> 标签)")
+	}
 	// decoded.xml 产物与金标准逐字节一致
 	gold, _ := os.ReadFile(ptGolden)
 	got, err := os.ReadFile(filepath.Join(arts, "decoded.xml"))

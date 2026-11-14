@@ -37,7 +37,7 @@ type PTDecodeTool struct {
 var (
 	ptVersionRe = regexp.MustCompile(`<VERSION>([^<]{1,64})</VERSION>`)
 	ptLineRe    = regexp.MustCompile(`<LINE>([^<]*)</LINE>`)
-	ptNameRe    = regexp.MustCompile(`<Name>([^<]{1,128})</Name>`)
+	ptNameRe    = regexp.MustCompile(`(?i)<name[^>]*>([^<]{1,128})</name>`) // 真实 PT XML 为大写 <NAME translate="true">(终审#1)
 	ptSecretRe  = regexp.MustCompile(`(?i)(password|secret|banner|enable\s+password|community)`)
 )
 

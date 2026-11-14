@@ -354,11 +354,16 @@ func decryptPT(data []byte) ([]byte, error) {
 	if err != nil {
 		return nil, errors.New("zlib 头校验失败:可能不是 Packet Tracer 容器,或为 PT 8.x+ 新加密格式(本工具支持 ≤7.x)")
 	}
-	raw, err := io.ReadAll(zr)
+	// 解压上限 512MB:真实 PT 工程约 1MB;防伪造容器的 zlib 炸弹撑爆内存(仓库惯例同 image_meta)
+	const maxXML = 512 << 20
+	raw, err := io.ReadAll(io.LimitReader(zr, maxXML+1))
 	if err != nil {
 		return nil, fmt.Errorf("zlib 解压失败: %v(可能不是 PT 容器)", err)
 	}
-	if size > 0 && int(size) <= len(raw) {
+	if len(raw) > maxXML {
+		return nil, errors.New("解压结果超过 512MB 上限:疑似伪造容器(zlib 炸弹)")
+	}
+	if size > 0 && uint64(size) <= uint64(len(raw)) { // uint64 比较,防 32 位平台 int 溢出(终审#3)
 		raw = raw[:size]
 	}
 	return raw, nil
