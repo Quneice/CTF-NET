@@ -11,17 +11,20 @@ import {
   updateWikiEntry,
 } from '@/lib/wiki';
 
+/** 模块级常量:引用稳定,避免父组件重渲染时触发工作区重新拉取 */
+const adapter = {
+  list: listWikiEntries,
+  create: createWikiEntry,
+  update: updateWikiEntry,
+  delete: deleteWikiEntry,
+};
+
 export default function RedTeamWikiWorkspace() {
   return (
     <WikiWorkspace
       categories={WIKI_CATEGORIES}
       categoryById={wikiCategoryById}
-      adapter={{
-        list: listWikiEntries,
-        create: createWikiEntry,
-        update: updateWikiEntry,
-        delete: deleteWikiEntry,
-      }}
+      adapter={adapter}
     />
   );
 }

@@ -12,18 +12,21 @@ import {
   updateReverseWikiEntry,
 } from '@/lib/reverseWiki';
 
+/** 模块级常量:引用稳定,避免父组件重渲染时触发工作区重新拉取 */
+const adapter = {
+  list: listReverseWikiEntries,
+  create: createReverseWikiEntry,
+  update: updateReverseWikiEntry,
+  delete: deleteReverseWikiEntry,
+};
+
 export default function ReverseWikiWorkspace() {
   return (
     <WikiWorkspace
       categories={REVERSE_WIKI_CATEGORIES}
       categoryById={reverseCategoryById}
       topWidget={<AsciiConverter />}
-      adapter={{
-        list: listReverseWikiEntries,
-        create: createReverseWikiEntry,
-        update: updateReverseWikiEntry,
-        delete: deleteReverseWikiEntry,
-      }}
+      adapter={adapter}
     />
   );
 }
