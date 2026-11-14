@@ -1,0 +1,1 @@
+import{j as r}from"./index-B5PgsKiI.js";import{T as s}from"./TextResult-BahrJCfs.js";function i({data:t}){const e=typeof t=="string"?t:JSON.stringify(t,null,2);return r.jsx(s,{text:e,filename:"result.txt"})}export{i as default};

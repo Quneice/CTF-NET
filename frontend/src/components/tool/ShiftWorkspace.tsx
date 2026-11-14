@@ -191,7 +191,11 @@ export default function ShiftWorkspace() {
   const [hits, setHits] = useState<ShiftHit[] | null>(null);
 
   const reversible = useMemo(() => layers.every((o) => o.mode !== 'shl' && o.mode !== 'shr'), [layers]);
-  const activeLayers = decode && reversible ? invertLayers(layers) ?? layers : layers;
+  // 引用稳定:避免每渲染新建数组导致 output 全量重算(同 Wiki 适配器教训)
+  const activeLayers = useMemo(
+    () => (decode && reversible ? invertLayers(layers) ?? layers : layers),
+    [decode, reversible, layers],
+  );
 
   const output = useMemo(() => {
     if (!input) return '';
