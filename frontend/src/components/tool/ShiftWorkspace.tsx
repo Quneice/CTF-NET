@@ -3,11 +3,11 @@ import { ArrowDown, ArrowUp, Binary, Layers, Plus, Repeat, Search, Trash2, Unfol
 
 import {
   applyLayers,
+  bruteForceLayers,
   bruteForceShift,
   describeShift,
   invertLayers,
   type ShiftDomain,
-  type ShiftHit,
   type ShiftMode,
   type ShiftOpts,
 } from '@/lib/shift';
@@ -198,10 +198,11 @@ export default function ShiftWorkspace() {
   const [input, setInput] = useState('');
   const [layers, setLayers] = useState<ShiftOpts[]>([defaultLayer()]);
   const [decode, setDecode] = useState(false);
-  // 爆破
+  // 爆破(单层富路径 / 多层链爆破)
   const [format, setFormat] = useState('');
   const [anywhere, setAnywhere] = useState(false);
-  const [hits, setHits] = useState<ShiftHit[] | null>(null);
+  const [hits, setHits] = useState<{ desc: string; plain: string; onPick: () => void }[] | null>(null);
+  const [bruteMsg, setBruteMsg] = useState<string | null>(null);
 
   const reversible = useMemo(() => layers.every((o) => o.mode !== 'shl' && o.mode !== 'shr'), [layers]);
   // 引用稳定:避免每渲染新建数组导致 output 全量重算(同 Wiki 适配器教训)
@@ -229,7 +230,47 @@ export default function ShiftWorkspace() {
 
   const singleLayer = layers.length === 1;
   const runBrute = () => {
-    setHits(bruteForceShift(input, format.trim(), anywhere));
+    setBruteMsg(null);
+    const fmt = format.trim();
+    if (singleLayer) {
+      setHits(
+        bruteForceShift(input, fmt, anywhere).map((h) => ({
+          desc: h.desc,
+          plain: h.plain,
+          onPick: () => {
+            setLayers([h.opts]);
+            setDecode(false);
+            setInput(h.plain);
+          },
+        })),
+      );
+      return;
+    }
+    // 多层:按用户层结构穷举参数(解码=各层取逆逆序应用;预算闸门拦高层数)
+    const r = bruteForceLayers(input, fmt, anywhere, layers);
+    if (r.budgetExceeded) {
+      setHits([]);
+      setBruteMsg(
+        `组合数 ${r.combos.toLocaleString()} 超预算(200 万):减少层数,或把大参数空间层(递增/XOR)换成常数/位运算层。`,
+      );
+      return;
+    }
+    if (r.combos === 0) {
+      setHits([]);
+      setBruteMsg('层链含 SHL/SHR(有损不可逆),无法爆破解码:请先移除该层。');
+      return;
+    }
+    setHits(
+      r.hits.map((h) => ({
+        desc: h.desc,
+        plain: h.plain,
+        onPick: () => {
+          setLayers(h.layers.map((l) => ({ ...l })));
+          setDecode(false);
+          setInput(h.plain);
+        },
+      })),
+    );
   };
 
   return (
@@ -317,50 +358,50 @@ export default function ShiftWorkspace() {
           <Search className="h-4 w-4 shrink-0 text-indigo-500" />
           <span className="font-medium text-slate-600 dark:text-slate-300">格式爆破</span>
           {!singleLayer && (
-            <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] text-amber-700 dark:bg-amber-500/10 dark:text-amber-400">
-              多层不支持爆破:请逐层还原到单层后再试
+            <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[11px] text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400">
+              多层模式:按当前 {layers.length} 层结构穷举参数(解码=各层取逆逆序)
             </span>
           )}
           <input
             value={format}
             onChange={(e) => setFormat(e.target.value)}
-            disabled={!singleLayer}
             placeholder="题目给的 flag 格式,如 flag{ / ctfshow{"
-            className="min-w-[12rem] flex-1 rounded-md border border-slate-300 bg-white px-2 py-1.5 font-mono text-xs disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+            className="min-w-[12rem] flex-1 rounded-md border border-slate-300 bg-white px-2 py-1.5 font-mono text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
           />
           <label className="flex items-center gap-1 text-slate-600 dark:text-slate-300">
-            <input
-              type="checkbox"
-              checked={anywhere}
-              disabled={!singleLayer}
-              onChange={(e) => setAnywhere(e.target.checked)}
-            />
+            <input type="checkbox" checked={anywhere} onChange={(e) => setAnywhere(e.target.checked)} />
             匹配任意位置(否则前缀)
           </label>
           <button
             type="button"
             onClick={runBrute}
-            disabled={!input || !format.trim() || !singleLayer}
+            disabled={!input || !format.trim()}
             className="rounded-md bg-indigo-500 px-3 py-1.5 font-medium text-white hover:bg-indigo-600 disabled:opacity-40"
           >
             爆破
           </button>
         </div>
+        <p className="mt-1 text-[11px] text-slate-400">
+          {singleLayer
+            ? '单层:全范围穷举 + XOR 已知前缀攻击。'
+            : '多层:紧凑范围(常数 ±16 / 递增 b±8·s±2 / XOR 单字节 / 位 1-7),组合预算 200 万,超出即拒(高层数请减层)。'}
+        </p>
+        {bruteMsg && (
+          <p className="mt-1 rounded-md bg-amber-50 px-2 py-1 text-[11px] text-amber-700 dark:bg-amber-500/10 dark:text-amber-400">
+            {bruteMsg}
+          </p>
+        )}
         {hits !== null && (
           <div className="mt-2 max-h-56 overflow-y-auto text-xs">
-            {hits.length === 0 ? (
-              <span className="text-slate-400">无命中:试试任意位置匹配、扩大已知片段,或密文并非纯移位。</span>
-            ) : (
+            {hits.length === 0 && !bruteMsg ? (
+              <span className="text-slate-400">无命中:试试任意位置匹配、扩大已知片段,或密文并非纯移位/异或。</span>
+            ) : hits.length === 0 ? null : (
               <ul className="divide-y divide-slate-100 dark:divide-slate-800">
                 {hits.map((h, i) => (
                   <li key={i}>
                     <button
                       type="button"
-                      onClick={() => {
-                        setLayers([h.opts]);
-                        setDecode(false);
-                        setInput(h.plain);
-                      }}
+                      onClick={h.onPick}
                       className="flex w-full items-baseline gap-2 px-1 py-1.5 text-left hover:bg-slate-100 dark:hover:bg-slate-800"
                       title="点击回填参数与输入"
                     >

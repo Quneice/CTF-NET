@@ -36,6 +36,20 @@ export interface ShiftHit {
   desc: string;
 }
 
+/** 多层爆破命中:整条参数化层链 */
+export interface LayersHit {
+  layers: ShiftOpts[];
+  plain: string;
+  desc: string;
+}
+
+/** 多层爆破结果:combos 为组合总数;budgetExceeded 表示超出预算被拒 */
+export interface LayersBruteResult {
+  hits: LayersHit[];
+  combos: number;
+  budgetExceeded: boolean;
+}
+
 /** 值域内加法(byte: mod 256;printable: 可打印环,非可打印原样;alpha: 字母环,非字母原样) */
 function domainAdd(c: number, delta: number, domain: ShiftDomain): number {
   if (domain === 'byte') {
@@ -261,4 +275,180 @@ export function bruteForceShift(cipher: string, format: string, anywhere: boolea
     }
   }
   return hits;
+}
+
+// —— 多层爆破:层结构(模式/域/顺序)由用户指定,穷举各层参数 ——
+
+/** 紧凑参数范围(控制组合爆炸;单层富范围爆破仍走 bruteForceShift) */
+const CHAIN_BRUTE = {
+  budgetFast: 2_000_000, // 拉丁区输入(全字符 ≤0xFF)走 Uint8Array 快路径的预算
+  budgetSlow: 100_000, // 非 ASCII 输入走字符串路径的预算
+  constN: 16, // const N ∈ ±16(33)
+  incB: 8, // inc b ∈ ±8(17)
+  incS: 2, // inc s ∈ ±2(5)
+  rotCap: 32, // rotl/rotr k ≤ 32(再按密文长取小)
+};
+
+/** 单层紧凑候选集(保留用户层结构与域;XOR 层在链爆中仅单字节 256) */
+function layerCandidates(o: ShiftOpts, cipherLen: number): ShiftOpts[] {
+  const out: ShiftOpts[] = [];
+  switch (o.mode) {
+    case 'const':
+      for (let n = -CHAIN_BRUTE.constN; n <= CHAIN_BRUTE.constN; n++) out.push({ ...o, n });
+      break;
+    case 'inc':
+      for (let b = -CHAIN_BRUTE.incB; b <= CHAIN_BRUTE.incB; b++) {
+        for (let s = -CHAIN_BRUTE.incS; s <= CHAIN_BRUTE.incS; s++) out.push({ ...o, n: b, s });
+      }
+      break;
+    case 'xor':
+      for (let v = 0; v <= 255; v++) out.push({ mode: 'xor', domain: 'byte', n: 0, key: String.fromCharCode(v) });
+      break;
+    case 'rol':
+    case 'ror':
+    case 'shl':
+    case 'shr':
+      for (let n = 1; n <= 7; n++) out.push({ ...o, n });
+      break;
+    case 'rotl':
+    case 'rotr': {
+      const kmax = Math.min(cipherLen - 1, CHAIN_BRUTE.rotCap);
+      for (let k = 0; k <= kmax; k++) out.push({ ...o, n: k });
+      break;
+    }
+  }
+  return out;
+}
+
+/** 拉丁区检测:全部字符 ≤ 0xFF 时可用字节快路径(与 applyLayers 结果一致) */
+function isLatin1(s: string): boolean {
+  for (let i = 0; i < s.length; i++) if (s.charCodeAt(i) > 0xff) return false;
+  return true;
+}
+
+/** 字节版单层应用(拉丁区专用,与 applyShift 数值等价) */
+function applyLayerBytes(b: Uint8Array, o: ShiftOpts): Uint8Array {
+  if (o.mode === 'rotl' || o.mode === 'rotr') {
+    const L = b.length;
+    if (L === 0) return b;
+    const k = mod(Math.trunc(o.n), L);
+    if (k === 0) return b;
+    const out = new Uint8Array(L);
+    if (o.mode === 'rotl') {
+      out.set(b.subarray(k), 0);
+      out.set(b.subarray(0, k), L - k);
+    } else {
+      out.set(b.subarray(L - k), 0);
+      out.set(b.subarray(0, L - k), k);
+    }
+    return out;
+  }
+  const out = new Uint8Array(b.length);
+  if (o.mode === 'xor') {
+    const v = (o.key ?? '\x00').charCodeAt(0) & 0xff;
+    for (let i = 0; i < b.length; i++) out[i] = b[i] ^ v;
+    return out;
+  }
+  if (o.mode === 'rol' || o.mode === 'ror' || o.mode === 'shl' || o.mode === 'shr') {
+    const bits = Math.max(0, Math.min(7, Math.trunc(o.n)));
+    for (let i = 0; i < b.length; i++) {
+      const x = b[i];
+      let r: number;
+      if (o.mode === 'rol') r = bits === 0 ? x : ((x << bits) | (x >>> (8 - bits))) & 0xff;
+      else if (o.mode === 'ror') r = bits === 0 ? x : ((x >>> bits) | (x << (8 - bits))) & 0xff;
+      else if (o.mode === 'shl') r = (x << bits) & 0xff;
+      else r = x >>> bits;
+      out[i] = r;
+    }
+    return out;
+  }
+  // const / inc
+  for (let i = 0; i < b.length; i++) {
+    const delta = o.mode === 'inc' ? Math.trunc(o.n) + i * Math.trunc(o.s ?? 1) : Math.trunc(o.n);
+    out[i] = domainAdd(b[i], delta, o.domain);
+  }
+  return out;
+}
+
+/** 用户层链的解码候选集:模式取逆(rol↔ror/rotl↔rotr,shl/shr 无逆返回空),范围对称不变 */
+function decodeCandidates(o: ShiftOpts, cipherLen: number): ShiftOpts[] {
+  const inv = invertShift({ ...o });
+  if (!inv) return [];
+  return layerCandidates(inv, cipherLen);
+}
+
+/**
+ * 多层爆破:按用户层结构(顺序/模式/域固定)穷举各层参数,还原明文并匹配格式串。
+ * 语义:用户层链 = 加密链;解码 = 各层取逆后**逆序**应用(层运算不可交换,顺序敏感)。
+ * 紧凑范围:const ±16、inc b±8·s±2、XOR 单字节 0-255、位运算 1-7、旋转 ≤min(密文长,32);
+ * 链中含 SHL/SHR(有损)则无解。命中 hit.layers 为用户顺序的**加密参数**(可直接回填)。
+ * 组合预算:拉丁区 200 万(约秒级)、非 ASCII 10 万;超预算拒绝(budgetExceeded=true,
+ * 即"高层数放弃")。单层请用 bruteForceShift(全范围 + XOR 前缀攻击)。
+ */
+export function bruteForceLayers(
+  cipher: string,
+  format: string,
+  anywhere: boolean,
+  layers: ShiftOpts[],
+): LayersBruteResult {
+  if (!format || layers.length === 0) return { hits: [], combos: 0, budgetExceeded: false };
+  const cipherLen = Array.from(cipher).length;
+  // 每层的解码候选(用户顺序索引);应用时逆序遍历
+  const decodeSets = layers.map((l) => decodeCandidates(l, Math.max(cipherLen, 1)));
+  const combos = decodeSets.reduce((a, c) => a * c.length, 1);
+  const budget = isLatin1(cipher) ? CHAIN_BRUTE.budgetFast : CHAIN_BRUTE.budgetSlow;
+  if (combos > budget || !Number.isFinite(combos)) {
+    return { hits: [], combos, budgetExceeded: true };
+  }
+  const hits: LayersHit[] = [];
+  const match = (plain: string) => (anywhere ? plain.includes(format) : plain.startsWith(format));
+  /** 记录命中:应用的是解码候选,换算回用户顺序的加密参数 */
+  const record = (applied: ShiftOpts[]) => {
+    const enc = applied.map((c) => invertShift(c) ?? c);
+    let plain = '';
+    // applied[0] 对应 layers[0] 的解码候选;plain 已由调用方算出
+    return enc;
+  };
+
+  if (isLatin1(cipher)) {
+    // 字节快路径:DFS 从用户层链的最后一层往前解,祖先层只算一次
+    const root = new Uint8Array(cipher.length);
+    for (let i = 0; i < cipher.length; i++) root[i] = cipher.charCodeAt(i);
+    const applied = new Array<ShiftOpts>(layers.length); // applied[i] = 第 i 层实际使用的解码候选
+    const dfs = (depth: number, cur: Uint8Array) => {
+      if (depth === layers.length) {
+        let plain = '';
+        for (let i = 0; i < cur.length; i++) plain += String.fromCharCode(cur[i]);
+        if (match(plain)) {
+          const enc = record(applied);
+          hits.push({ layers: enc, plain, desc: enc.map(describeShift).join(' → ') });
+        }
+        return;
+      }
+      const layerIdx = layers.length - 1 - depth; // 逆序应用
+      for (const cand of decodeSets[layerIdx]) {
+        applied[layerIdx] = cand;
+        dfs(depth + 1, applyLayerBytes(cur, cand));
+      }
+    };
+    dfs(0, root);
+  } else {
+    const applied = new Array<ShiftOpts>(layers.length);
+    const dfs = (depth: number, cur: string) => {
+      if (depth === layers.length) {
+        if (match(cur)) {
+          const enc = record(applied);
+          hits.push({ layers: enc, plain: cur, desc: enc.map(describeShift).join(' → ') });
+        }
+        return;
+      }
+      const layerIdx = layers.length - 1 - depth;
+      for (const cand of decodeSets[layerIdx]) {
+        applied[layerIdx] = cand;
+        dfs(depth + 1, applyShift(cur, cand));
+      }
+    };
+    dfs(0, cipher);
+  }
+  return { hits, combos, budgetExceeded: false };
 }

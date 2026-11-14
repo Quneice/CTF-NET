@@ -1,0 +1,1 @@
+import{j as r}from"./index-DQLysfru.js";import{T as s}from"./TextResult-Ce89yLhe.js";function i({data:e}){const t=typeof e=="string"?e:JSON.stringify(e,null,2);return r.jsx(s,{text:t,filename:"result.hex"})}export{i as default};
