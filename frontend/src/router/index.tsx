@@ -53,6 +53,18 @@ export const router = createBrowserRouter([
       { path: 'c/crypto.modern.rsa.number-theoretic', element: <Navigate to="/c/crypto.modern.rsa" replace /> },
       { path: 'c/crypto.modern.rsa.coppersmith', element: <Navigate to="/c/crypto.modern.rsa" replace /> },
       { path: 'c/forensics.network', element: <Navigate to="/c/traffic" replace /> },
+      // 2026-11-15 布局整改:stego 并入 Misc(子类 id 重命名)、osint 扁平化、misc.demo/report 删除
+      { path: 'c/stego', element: <Navigate to="/c/misc" replace /> },
+      { path: 'c/stego.image', element: <Navigate to="/c/misc.stego.image" replace /> },
+      { path: 'c/stego.audio', element: <Navigate to="/c/misc.audio" replace /> },
+      { path: 'c/stego.video', element: <Navigate to="/c/misc.stego.video" replace /> },
+      { path: 'c/stego.text', element: <Navigate to="/c/misc.stego.text" replace /> },
+      { path: 'c/osint.social', element: <Navigate to="/c/osint" replace /> },
+      { path: 'c/osint.geo', element: <Navigate to="/c/osint" replace /> },
+      { path: 'c/osint.image', element: <Navigate to="/c/osint" replace /> },
+      { path: 'c/osint.domain', element: <Navigate to="/c/osint" replace /> },
+      { path: 'c/misc.demo', element: <Navigate to="/c/misc" replace /> },
+      { path: 'c/misc.report', element: <Navigate to="/c/misc" replace /> },
       // 工具页由 AppLayout 内的 ToolTabsWorkspace 多开工作区接管渲染（keep-alive），
       // 此处的子路由仅用于路径匹配，element 不会被渲染
       { path: 't/:toolId', element: <ToolPage /> },

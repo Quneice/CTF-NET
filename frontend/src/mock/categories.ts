@@ -69,31 +69,42 @@ export const categories: CategoryNode[] = [
       { id: 'crypto.auto-decode', name: '自动解码', icon: 'Zap', description: '暴力尝试所有常见解码方式' },
     ],
   },
-  // 批 1 新增一级分类(ia.md §1.2 codec 拆分):先落 codec.base(base64 已迁入),其余编码工具批 2 平移
+  // 批 1 新增一级分类(ia.md §1.2 codec 拆分):codec 细化为 8 个子类(2026-11-15 布局整改)
   {
     id: 'codec',
     name: '编码转换',
     icon: 'Binary',
-    description: '无损格式转换:Base 家族、进制、转义、字符集等',
+    description: '无损格式转换:Base 家族、进制、趣味编码、序列化等',
     children: [
-      { id: 'codec.base', name: 'Base 家族', icon: 'Binary', description: 'Base2~Base92 全系列' },
+      { id: 'codec.base', name: 'Base 家族', icon: 'Binary', segment: true, description: 'Base2~Base92 全系列' },
+      { id: 'codec.radix', name: '进制与字符码', icon: 'Hash', segment: true, description: '进制转换、字符码、字节序' },
+      { id: 'codec.fun', name: '趣味编码', icon: 'Sparkles', segment: true, description: 'JSFuck/与佛论禅/ROT 系等迷因编码' },
+      { id: 'codec.textenc', name: '文本与传输编码', icon: 'Braces', segment: true, description: 'UU/UTF-7/HTML 实体/URL 转义类' },
+      { id: 'codec.serial', name: '数据序列化', icon: 'Boxes', segment: true, description: 'ASN.1/CBOR/TLV/MessagePack 等' },
+      { id: 'codec.hex', name: 'Hex 工具', icon: 'FileSearch', segment: true, description: '十六进制查看与 Hexdump' },
+      { id: 'codec.charset', name: '字符集与规范化', icon: 'Type', segment: true, description: '字符集编解码、Unicode 规范化' },
+      { id: 'codec.barcode', name: '条码二维码', icon: 'QrCode', segment: true, description: '二维码/条形码解码' },
     ],
   },
   {
     id: 'misc',
     name: 'Misc',
     icon: 'Puzzle',
-    description: '杂项与综合',
+    description: '杂项、隐写与文本数据处理',
     children: [
-      // 批 10:分组 chips 按本段所含 L2(§11「other/demo/report 中本段所含」= other + demo):
-      // 父页 /c/misc 顶部 chips(全部/其他/示例演示),「全部」= 域内全部 99 个工具
-      // (misc.other 93 + misc.demo 4 + misc.report 2;批 11 的 47 个 other 工具与 report 2 个
-      //  自批 2 起即可浏览,本批不新增可见范围);misc.report 保持子分类入口卡片(批 11 收口);
-      // 2 条子分类路由保留;侧边栏 L2 节点保留。
-      { id: 'misc.demo', name: '示例演示', icon: 'PlayCircle', segment: true },
-      { id: 'misc.report', name: '报告 / 工具', icon: 'FileText' },
-      // 音频隐写:WAV LSB 位平面提取等(2026-11 新增,入口卡片形式,工具挂 misc.audio)
-      { id: 'misc.audio', name: '音频隐写', icon: 'Music', description: 'WAV LSB 位平面隐写提取与类型自动识别' },
+      // 2026-11-15 布局整改:隐写并入 Misc(原 stego 顶级分类撤销);misc.other 92 工具细化拆分;
+      // misc.demo/misc.report(框架演示,无用)删除;全部子类以 chips 形式在 /c/misc 右侧筛选。
+      { id: 'misc.stego.image', name: '图片隐写', icon: 'Image', segment: true },
+      { id: 'misc.audio', name: '音频隐写', icon: 'Music', segment: true },
+      { id: 'misc.stego.video', name: '视频隐写', icon: 'Film', segment: true },
+      { id: 'misc.stego.text', name: '文本隐写', icon: 'Type', segment: true },
+      { id: 'misc.textproc', name: '文本处理', icon: 'Wrench', segment: true, description: '排序/去重/替换/正则等' },
+      { id: 'misc.datastat', name: '数据与位运算', icon: 'Activity', segment: true, description: '集合/位运算/统计/距离/熵' },
+      { id: 'misc.datetime', name: '日期时间', icon: 'ScrollText', segment: true, description: '时间戳解析与格式转换' },
+      { id: 'misc.format', name: '格式化美化', icon: 'FileCode', segment: true, description: 'JSON/XML/SQL/代码美化' },
+      { id: 'misc.encoding', name: '编码杂项', icon: 'Binary', segment: true, description: 'UUID/TOTP/单位换算/权限解析等' },
+      { id: 'misc.compress', name: '压缩与文件', icon: 'Folder', segment: true, description: 'ZIP/RAR 破解、Git 泄露、文件头' },
+      { id: 'misc.visualize', name: '可视化', icon: 'LayoutGrid', segment: true, description: '密度图/散点/折线/热力图' },
       { id: 'misc.other', name: '其他', icon: 'MoreHorizontal', segment: true },
     ],
   },
@@ -142,34 +153,12 @@ export const categories: CategoryNode[] = [
       { id: 'forensics.log', name: '日志分析', icon: 'ClipboardList', segment: true },
     ],
   },
-  {
-    id: 'stego',
-    name: 'Stego',
-    icon: 'Image',
-    description: '隐写术',
-    children: [
-      // 批 8:纯分组分类(本层无直挂工具)按「分组 chips」呈现(migration-plan §9,同批 7 机制):
-      // 父页 /c/stego 顶部 chips(全部/图片/音频/视频/文本),「全部」= 分类下全部 37 个工具
-      // (34 占位 + 批 1 迁入的 3 个已实现);4 条子分类路由保留;侧边栏 L2 节点保留。
-      { id: 'stego.image', name: '图片隐写', icon: 'Image', segment: true },
-      { id: 'stego.audio', name: '音频隐写', icon: 'Music', segment: true },
-      { id: 'stego.video', name: '视频隐写', icon: 'Film', segment: true },
-      { id: 'stego.text', name: '文本隐写', icon: 'Type', segment: true },
-    ],
-  },
+  // 2026-11-15 布局整改:stego 顶级分类撤销(隐写并入 Misc);osint 过度细分扁平化(6 工具直挂)。
   {
     id: 'osint',
     name: 'OSINT',
     icon: 'Eye',
     description: '开源情报',
-    children: [
-      // 批 9:纯分组分类按「分组 chips」呈现(§10):父页 /c/osint chips(全部/社交账号/地理位置/图片情报/域名 / 网络),
-      // 「全部」= 域内全部 6 个工具;4 条子分类路由保留;侧边栏 L2 节点保留。
-      { id: 'osint.social', name: '社交账号', icon: 'Users', segment: true },
-      { id: 'osint.geo', name: '地理位置', icon: 'MapPin', segment: true },
-      { id: 'osint.image', name: '图片情报', icon: 'Camera', segment: true },
-      { id: 'osint.domain', name: '域名 / 网络', icon: 'Globe2', segment: true },
-    ],
   },
   {
     id: 'blockchain',
