@@ -16,7 +16,7 @@ export function statusColor(status: number): string {
  */
 export default function ProxyMiniStatus() {
   const status = useProxyStore((s) => s.status);
-  const pending = useProxyStore((s) => s.pending);
+  const pendingCount = useProxyStore((s) => s.pendings.length);
 
   return (
     <Link
@@ -28,7 +28,7 @@ export default function ProxyMiniStatus() {
         className={`inline-block h-2 w-2 rounded-full ${status?.running ? 'bg-emerald-500' : 'bg-slate-400'}`}
       />
       {status?.running ? `运行中 127.0.0.1:${status.port}` : '未启动'}
-      {pending && <span className="text-amber-500">⏳ 挂起 1</span>}
+      {pendingCount > 0 && <span className="text-amber-500">⏳ 挂起 {pendingCount}</span>}
     </Link>
   );
 }

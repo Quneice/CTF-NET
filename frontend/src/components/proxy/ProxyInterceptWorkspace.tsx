@@ -29,8 +29,8 @@ export default function ProxyInterceptWorkspace() {
   const {
     status,
     busy,
-    pending,
-    pendingRaw,
+    pendings,
+    pendingRaws,
     pendingResult,
     flash,
     browserInfo,
@@ -49,6 +49,8 @@ export default function ProxyInterceptWorkspace() {
     releasePolling,
     loadBrowserInfo,
   } = useProxyStore();
+  const activePending = pendings[0] ?? null;
+  const activeRaw = activePending ? (pendingRaws[activePending.id] ?? '') : '';
 
   // 本地仅三个输入框状态
   const [portInput, setPortInput] = useState('8080');
@@ -101,7 +103,8 @@ export default function ProxyInterceptWorkspace() {
   };
 
   const onSendToRepeater = () => {
-    sendToRepeater(pendingRaw);
+    if (!activePending) return;
+    sendToRepeater(activeRaw);
     navigate('/t/pentest.proxy.repeater');
   };
 
@@ -253,11 +256,11 @@ export default function ProxyInterceptWorkspace() {
             拦截开关当前为「关」,流量将透明转发并记录历史。打开拦截后,每个请求会在此挂起等待处理。
           </p>
         )}
-        {pending ? (
+        {activePending ? (
           <>
             <textarea
-              value={pendingRaw}
-              onChange={(e) => setPendingRaw(e.target.value)}
+              value={activeRaw}
+              onChange={(e) => setPendingRaw(activePending.id, e.target.value)}
               spellCheck={false}
               className="h-64 w-full rounded-md border border-slate-300 p-2 font-mono text-xs dark:border-slate-700 dark:bg-slate-800"
             />
@@ -291,7 +294,8 @@ export default function ProxyInterceptWorkspace() {
                 <Send className="h-3.5 w-3.5" /> 发送到重放器
               </button>
               <span className="text-[11px] text-slate-400">
-                拦截中:{pending.method} {pending.url}
+                拦截中:{activePending.method} {activePending.url}
+                {pendings.length > 1 ? ` · 队列中还有 ${pendings.length - 1} 个挂起` : ''}
               </span>
             </div>
           </>

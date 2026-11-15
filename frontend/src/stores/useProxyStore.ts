@@ -47,9 +47,11 @@ interface Flash {
 interface ProxyState {
   status: ProxyStatus | null;
   history: ProxySummary[];
-  /** 拦截挂起中的请求(store 持有:用户在其他页时到达也不丢,回拦截页即见) */
-  pending: ProxyRecord | null;
-  pendingRaw: string;
+  /** 拦截挂起队列(后端可并发挂起多条;队首为当前处理对象,逐条决策) */
+  pendings: ProxyRecord[];
+  /** 各挂起请求的可编辑报文副本(按 id;队首的用于修改放行) */
+  pendingRaws: Record<string, string>;
+  /** 最近一次决策的结果展示(放行后终态/丢弃提示) */
   pendingResult: string;
   /** 流量历史页选中记录详情 */
   selected: ProxyRecord | null;
@@ -68,7 +70,7 @@ interface ProxyState {
   toggleIntercept(): Promise<void>;
   toggleMitm(): Promise<void>;
   decide(action: 'forward' | 'drop' | 'modified'): Promise<void>;
-  setPendingRaw(raw: string): void;
+  setPendingRaw(id: string, raw: string): void;
   openRecord(id: string): Promise<void>;
   clearHistory(): Promise<void>;
   sendToRepeater(raw: string): number;
@@ -115,8 +117,8 @@ export const useProxyStore = create<ProxyState>()((set, get) => {
   return {
     status: null,
     history: [],
-    pending: null,
-    pendingRaw: '',
+    pendings: [],
+    pendingRaws: {},
     pendingResult: '',
     selected: null,
     repeaterTabs: [],
@@ -134,7 +136,10 @@ export const useProxyStore = create<ProxyState>()((set, get) => {
           void (async () => {
             try {
               const rec = await proxyGetRecord(item.id);
-              set({ pending: rec, pendingRaw: rec.raw_request, pendingResult: '' });
+              set((s) => ({
+                pendings: [...s.pendings, rec],
+                pendingRaws: { ...s.pendingRaws, [rec.id]: rec.raw_request },
+              }));
             } catch {
               // 记录竞态未入历史时忽略(轮询会兜底)
             }
@@ -193,7 +198,7 @@ export const useProxyStore = create<ProxyState>()((set, get) => {
       try {
         await proxyStop();
         flashOnce('ok', '代理已停止');
-        set({ pending: null });
+        set({ pendings: [], pendingRaws: {} });
         await get().refresh();
       } catch (e) {
         flashOnce('err', String(e));
@@ -229,16 +234,23 @@ export const useProxyStore = create<ProxyState>()((set, get) => {
     },
 
     decide: async (action) => {
-      const { pending, pendingRaw } = get();
-      if (!pending) return;
+      const cur = get().pendings[0];
+      if (!cur) return;
+      const raw = get().pendingRaws[cur.id] ?? cur.raw_request;
       set({ busy: true });
       try {
-        await proxyDecide(pending.id, action, action === PROXY_MODIFIED ? pendingRaw : '');
+        await proxyDecide(cur.id, action, action === PROXY_MODIFIED ? raw : '');
         set({
           pendingResult:
             action === PROXY_DROP ? '已丢弃(目标不会收到该请求)' : '已放行,等待响应…',
         });
-        const rec = await waitRecord(pending.id);
+        const rec = await waitRecord(cur.id);
+        // 按 id 移除(而非清空队列):等待期间可能有新挂起入队,不能误伤
+        set((s) => {
+          const pendingRaws = { ...s.pendingRaws };
+          delete pendingRaws[cur.id];
+          return { pendings: s.pendings.filter((p) => p.id !== cur.id), pendingRaws };
+        });
         if (rec) {
           set({
             pendingResult:
@@ -247,7 +259,6 @@ export const useProxyStore = create<ProxyState>()((set, get) => {
                 : `${rec.note ?? '未完成'}`,
           });
         }
-        set({ pending: null });
         void get().refresh();
       } catch (e) {
         flashOnce('err', String(e));
@@ -256,7 +267,8 @@ export const useProxyStore = create<ProxyState>()((set, get) => {
       }
     },
 
-    setPendingRaw: (raw) => set({ pendingRaw: raw }),
+    setPendingRaw: (id, raw) =>
+      set((s) => ({ pendingRaws: { ...s.pendingRaws, [id]: raw } })),
 
     openRecord: async (id) => {
       try {
