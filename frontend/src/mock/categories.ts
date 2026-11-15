@@ -21,6 +21,7 @@ export const categories: CategoryNode[] = [
       { id: 'web.xss', name: 'XSS', icon: 'Zap', description: '跨站脚本攻击' },
       { id: 'web.ssrf', name: 'SSRF', icon: 'Network', description: '服务端请求伪造' },
       { id: 'web.rce', name: 'RCE', icon: 'Terminal', description: '命令注入与远程代码执行' },
+      { id: 'web.xxe', name: 'XXE', icon: 'FileWarning', description: 'XML 外部实体注入' },
       { id: 'web.deserialize', name: '反序列化', icon: 'Boxes', description: '不安全反序列化' },
       { id: 'web.ssti', name: 'SSTI', icon: 'Braces', description: '模板注入' },
       { id: 'web.upload', name: '文件上传', icon: 'Upload', description: '文件上传绕过' },
@@ -63,6 +64,7 @@ export const categories: CategoryNode[] = [
           },
           { id: 'crypto.modern.aes', name: 'AES', icon: 'ShieldCheck' },
           { id: 'crypto.modern.ecc', name: 'ECC', icon: 'ShieldCheck' },
+          { id: 'crypto.modern.dh', name: 'DH', icon: 'Handshake' },
         ],
       },
       { id: 'crypto.hash', name: '哈希', icon: 'Hash', description: '哈希与相关攻击' },
@@ -98,6 +100,7 @@ export const categories: CategoryNode[] = [
       { id: 'misc.audio', name: '音频隐写', icon: 'Music', segment: true },
       { id: 'misc.stego.video', name: '视频隐写', icon: 'Film', segment: true },
       { id: 'misc.stego.text', name: '文本隐写', icon: 'Type', segment: true },
+      { id: 'misc.jail', name: '沙箱逃逸', icon: 'DoorClosed', segment: true, description: 'pyjail/bashjail 沙箱与受限环境逃逸' },
       { id: 'misc.textproc', name: '文本处理', icon: 'Wrench', segment: true, description: '排序/去重/替换/正则等' },
       { id: 'misc.datastat', name: '数据与位运算', icon: 'Activity', segment: true, description: '集合/位运算/统计/距离/熵' },
       { id: 'misc.datetime', name: '日期时间', icon: 'ScrollText', segment: true, description: '时间戳解析与格式转换' },
@@ -136,16 +139,19 @@ export const categories: CategoryNode[] = [
       { id: 'pwn.heap', name: '堆利用', icon: 'Blocks', segment: true },
       { id: 'pwn.format', name: '格式化字符串', icon: 'Percent', segment: true },
       { id: 'pwn.shellcode', name: 'Shellcode', icon: 'Code2', segment: true },
+      { id: 'pwn.kernel', name: '内核', icon: 'Cpu', segment: true },
     ],
   },
   {
     id: 'forensics',
-    name: 'Forensics',
-    icon: 'Search',
-    description: '数字取证',
+    name: '主机取证',
+    icon: 'Server',
+    description: '主机取证:内存取证、磁盘取证、日志分析',
     children: [
+      // 批 15:本域从 CTF 模式内分类提升为独立模块「主机取证」(独立模式可见;CTF 模式共享该根,
+      // 同 traffic 先例)。分类 id 保持 forensics → 工具 id/categoryId 零迁移,旧路由全部保留。
       // 批 7:纯分组分类(本层无直挂工具)按「分组 chips」呈现(migration-plan §8,复用批 4 FilterChip 机制):
-      // 父页 /c/forensics 顶部 chips(全部/内存取证/磁盘取证/日志分析),「全部」= 分类下全部 32 个工具;
+      // 父页 /c/forensics 顶部 chips(全部/内存取证/磁盘取证/日志分析),「全部」= 分类下全部工具;
       // 原流量分析 segment 已独立为顶级 traffic 分类(22 个工具迁出,id 不变,仅 categoryId 迁移);
       // 3 条子分类路由保留(直接访问 /c/forensics.disk 等仍可达);侧边栏 L2 节点保留。
       { id: 'forensics.memory', name: '内存取证', icon: 'MemoryStick', segment: true },
@@ -220,6 +226,23 @@ export const categories: CategoryNode[] = [
   { id: 'pentest.arsenal', name: '轻武器库', icon: 'Swords', description: '渗透测试·轻武器库' },
   { id: 'pentest.tunnel', name: '内网穿透', icon: 'Network', description: '渗透测试·隧道与内网穿透' },
   { id: 'pentest.assist', name: '辅助工具', icon: 'Wrench', description: '渗透测试·辅助工具' },
+  // 木马管理域(批 16):Webshell 连接管理、木马生成免杀、监听会话、检测痕迹。
+  // 纯分组分类按「分组 chips」呈现(同 pwn/forensics 机制):父页 /c/pentest.trojan 顶部 chips,
+  // 「全部」= 域内全部工具;4 条子分类路由保留;侧边栏 L2 节点保留。
+  {
+    id: 'pentest.trojan',
+    name: '木马管理',
+    icon: 'Skull',
+    description: '渗透测试·木马管理:Webshell 连接管理、木马生成免杀、监听会话、检测痕迹',
+    children: [
+      { id: 'pentest.trojan.webshell', name: 'Webshell 管理', icon: 'Ghost', segment: true, description: '连接管理/命令执行/文件与数据库/隧道' },
+      { id: 'pentest.trojan.generate', name: '生成与免杀', icon: 'Wand2', segment: true, description: '一句话/EXE/Loader 生成、混淆与免杀自检' },
+      { id: 'pentest.trojan.listener', name: '监听与会话', icon: 'RadioTower', segment: true, description: '监听器/会话/任务下发/流量伪装' },
+      { id: 'pentest.trojan.detect', name: '检测与痕迹', icon: 'ScanSearch', segment: true, description: 'Webshell 检测/YARA/痕迹清理/持久化' },
+    ],
+  },
+  // 代理拦截域(批 17):Burp 风格 HTTP 代理(捕获/拦截修改/放行丢弃/历史/重放),workspace 工具直挂本节点
+  { id: 'pentest.proxy', name: '代理拦截', icon: 'Waypoints', description: '渗透测试·HTTP 代理拦截与重放(Burp 风格)' },
   // AI 渗透：一级分类（自动化渗透任务 + 对话式渗透），
   // 与 pentest.* 同级的独立顶级节点，两种模式均可见。
   { id: 'ai.pentest', name: 'AI 渗透', icon: 'Bot', description: 'AI 自动化渗透与对话式渗透测试' },

@@ -46,6 +46,14 @@ export function AuditWriteFile(arg1, arg2, arg3) {
   return window['go']['main']['App']['AuditWriteFile'](arg1, arg2, arg3);
 }
 
+export function BrowserAvailable() {
+  return window['go']['main']['App']['BrowserAvailable']();
+}
+
+export function BrowserLaunch(arg1, arg2) {
+  return window['go']['main']['App']['BrowserLaunch'](arg1, arg2);
+}
+
 export function CloseSession(arg1) {
   return window['go']['main']['App']['CloseSession'](arg1);
 }
@@ -256,6 +264,54 @@ export function ListWikiEntries(arg1) {
 
 export function PathExists(arg1) {
   return window['go']['main']['App']['PathExists'](arg1);
+}
+
+export function ProxyCAExport(arg1) {
+  return window['go']['main']['App']['ProxyCAExport'](arg1);
+}
+
+export function ProxyCAInstall() {
+  return window['go']['main']['App']['ProxyCAInstall']();
+}
+
+export function ProxyDecide(arg1, arg2, arg3) {
+  return window['go']['main']['App']['ProxyDecide'](arg1, arg2, arg3);
+}
+
+export function ProxyGetRecord(arg1) {
+  return window['go']['main']['App']['ProxyGetRecord'](arg1);
+}
+
+export function ProxyHistory(arg1, arg2) {
+  return window['go']['main']['App']['ProxyHistory'](arg1, arg2);
+}
+
+export function ProxyHistoryClear() {
+  return window['go']['main']['App']['ProxyHistoryClear']();
+}
+
+export function ProxyReplay(arg1) {
+  return window['go']['main']['App']['ProxyReplay'](arg1);
+}
+
+export function ProxySetIntercept(arg1) {
+  return window['go']['main']['App']['ProxySetIntercept'](arg1);
+}
+
+export function ProxySetMITM(arg1) {
+  return window['go']['main']['App']['ProxySetMITM'](arg1);
+}
+
+export function ProxyStart(arg1) {
+  return window['go']['main']['App']['ProxyStart'](arg1);
+}
+
+export function ProxyStatus() {
+  return window['go']['main']['App']['ProxyStatus']();
+}
+
+export function ProxyStop() {
+  return window['go']['main']['App']['ProxyStop']();
 }
 
 export function RunTool(arg1, arg2) {

@@ -5,11 +5,11 @@ import { categoryMap, getToolsUnderCategory } from './index';
 /**
  * 模式配置（单一数据源）。
  *
- * 「CTF 模式 / 渗透测试模式 / 模型安全模式 / 流量分析模式 / 逆向模式」通过 categoryRoots 声明各自可见的一级分类；
- * 分类可被多个模式共享（如 web / codec / osint 同时属于两种模式），
+ * 「CTF 模式 / 渗透测试模式 / 模型安全模式 / 流量分析模式 / 逆向模式 / 主机取证模式」通过 categoryRoots 声明各自可见的一级分类；
+ * 分类可被多个模式共享（如 web / codec / osint 同时属于两种模式；forensics 主机取证同时属于 CTF 与主机取证两种模式），
  * 调整归属只改本文件的 categoryRoots。
  */
-export type AppMode = 'ctf' | 'pentest' | 'modelsec' | 'traffic' | 'reverse';
+export type AppMode = 'ctf' | 'pentest' | 'modelsec' | 'traffic' | 'reverse' | 'hostforensics';
 
 export interface ModeInfo {
   /** 模式显示名 */
@@ -47,8 +47,8 @@ export const MODE_CONFIG: Record<AppMode, ModeInfo> = {
   pentest: {
     label: '渗透测试模式',
     icon: 'Crosshair',
-    description: '实战渗透：信息收集、资产探测、漏洞检测、武器库、内网穿透，共享 Web / 编码 / OSINT 工具',
-    // 渗透域 6 个顶级分类（原 pentest 子分类已提升为顶级）+ 共享的 Web / 编码 / OSINT
+    description: '实战渗透：信息收集、资产探测、漏洞检测、武器库、木马管理、代理拦截、内网穿透，共享 Web / 编码 / OSINT 工具',
+    // 渗透域 8 个顶级分类（原 pentest 子分类已提升为顶级；批 16 木马管理、批 17 代理拦截）+ 共享的 Web / 编码 / OSINT
     categoryRoots: [
       'pentest.recon',
       'pentest.scan',
@@ -56,6 +56,8 @@ export const MODE_CONFIG: Record<AppMode, ModeInfo> = {
       'pentest.arsenal',
       'pentest.tunnel',
       'pentest.assist',
+      'pentest.trojan',
+      'pentest.proxy',
       'ai.pentest',
       'web',
       'codec',
@@ -87,6 +89,14 @@ export const MODE_CONFIG: Record<AppMode, ModeInfo> = {
     icon: 'FileCode2',
     description: '逆向工程:静态分析、动态调试、去混淆,共享编码与数据处理工具',
     categoryRoots: ['reverse', 'codec', 'data'],
+  },
+  // 批 15:主机取证从 CTF 模式内分类提升为独立模块(同流量分析先例;forensics 分类 id 不变,
+  // 工具 id/categoryId 零迁移;CTF 模式仍共享该根——取证题本是 CTF 常驻题型)
+  hostforensics: {
+    label: '主机取证模式',
+    icon: 'Server',
+    description: '主机取证:内存取证、磁盘取证、日志分析,共享编码与数据处理工具',
+    categoryRoots: ['forensics', 'codec', 'data'],
   },
 };
 

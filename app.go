@@ -7,11 +7,13 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sync"
 	"time"
 
 	"ctfnet/internal/audit"
 	"ctfnet/internal/core"
 	"ctfnet/internal/projects"
+	"ctfnet/internal/proxy"
 	"ctfnet/internal/wiki"
 )
 
@@ -95,6 +97,9 @@ type App struct {
 	ReverseWiki *wiki.Store     // 逆向 Wiki（reverse_wiki.go）
 	Cfg         *core.Config    // 统一应用配置（config_api.go）
 	Audit       *audit.Store    // 代码审计工作区（audit_api.go）
+
+	proxyOnce   sync.Once      // 代理引擎懒初始化（proxy_api.go）
+	proxyServer *proxy.Server  // HTTP 代理拦截与重放引擎（proxy_api.go）
 
 	ctx context.Context // Wails 应用上下文（OnStartup 注入，流式事件推送用）
 }
