@@ -84,8 +84,9 @@ const TreeNode = memo(
     const { toggleExpanded } = useCategoryStore();
 
     const hasChildren = depth < MAX_EXPAND_DEPTH && !!node.children?.length;
-    // 叶子分类（无子分类）可在侧边栏直接展开显示其下工具，如 信息收集 → 空间测绘/AK 管理
-    const directTools = node.children?.length ? undefined : getDirectTools(node.id);
+    // 2026-11-15 布局整改:侧边栏最多一层下拉——仅 L1(depth 0)叶子分类可展开直挂工具;
+    // L2 一律点击进入分类页,由右侧工具卡片/chips 选择(如 信息收集 → 空间测绘/AK 管理)。
+    const directTools = depth === 0 && !node.children?.length ? getDirectTools(node.id) : undefined;
     const expandable = hasChildren || !!directTools?.length;
     const Icon = getIcon(node.icon);
 
