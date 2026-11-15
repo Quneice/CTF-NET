@@ -26,7 +26,7 @@ export const MODE_CONFIG: Record<AppMode, ModeInfo> = {
   ctf: {
     label: 'CTF 模式',
     icon: 'Flag',
-    description: '竞赛解题：Web、Crypto、Misc、Reverse、Pwn、取证、隐写等 15 大分类',
+    description: '竞赛解题：Web、Crypto、Misc(含图片/音频/视频/文本隐写)、Reverse、Pwn、取证等 14 大分类',
     categoryRoots: [
       'web',
       'crypto',
@@ -35,7 +35,6 @@ export const MODE_CONFIG: Record<AppMode, ModeInfo> = {
       'reverse',
       'pwn',
       'forensics',
-      'stego',
       'osint',
       'blockchain',
       'mobile',

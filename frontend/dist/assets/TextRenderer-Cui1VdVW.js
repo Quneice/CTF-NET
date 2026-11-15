@@ -1,1 +1,0 @@
-import{j as r}from"./index-jNwVvNiP.js";import{T as s}from"./TextResult-OikOMCd3.js";function i({data:t}){const e=typeof t=="string"?t:JSON.stringify(t,null,2);return r.jsx(s,{text:e,filename:"result.txt"})}export{i as default};

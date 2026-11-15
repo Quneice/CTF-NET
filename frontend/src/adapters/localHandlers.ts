@@ -705,13 +705,6 @@ localHandlerRegistry.register('local.hash', (params) => {
   return hashData(algos, String(params.data ?? ''));
 });
 
-localHandlerRegistry.register('local.writeup', (params) => {
-  const title = String(params.title ?? 'Untitled');
-  const steps = String(params.steps ?? '');
-  const flag = String(params.flag ?? '');
-  return `# ${title}\n\n## 解题步骤\n\n${steps}\n${flag ? `\n## Flag\n\n\`${flag}\`\n` : ''}`;
-});
-
 /** 用 HS256 密钥对 header.payload 重新签名,返回完整 JWT(base64url 签名段) */
 async function signJwtHs256(headerPart: string, payloadPart: string, secret: string): Promise<string> {
   const data = `${headerPart}.${payloadPart}`;

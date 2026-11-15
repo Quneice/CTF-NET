@@ -5,7 +5,7 @@ import type { CategoryNode } from '@/types';
  *
  * 结构与后端 `app/core/tool.py` 的 Category 枚举对齐（web / pwn / reverse /
  * crypto / misc / forensics / mobile / blockchain / osint / ai），并额外拆分出
- * Stego（隐写）作为独立大类。支持最多 4 层子分类。
+ * (2026-11-15 整改:隐写并入 Misc,Stego 顶级分类已撤销)。支持最多 4 层子分类,侧边栏限深一层。
  *
  * `icon` 使用 lucide-react 的组件名（字符串），在侧边栏由 iconMap 映射为真实组件。
  */
@@ -92,7 +92,7 @@ export const categories: CategoryNode[] = [
     icon: 'Puzzle',
     description: '杂项、隐写与文本数据处理',
     children: [
-      // 2026-11-15 布局整改:隐写并入 Misc(原 stego 顶级分类撤销);misc.other 92 工具细化拆分;
+      // 2026-11-15 布局整改:隐写并入 Misc(原 stego 顶级分类撤销);misc.other 94 工具细化拆分(80 迁出,余 14);
       // misc.demo/misc.report(框架演示,无用)删除;全部子类以 chips 形式在 /c/misc 右侧筛选。
       { id: 'misc.stego.image', name: '图片隐写', icon: 'Image', segment: true },
       { id: 'misc.audio', name: '音频隐写', icon: 'Music', segment: true },
