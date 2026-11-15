@@ -5761,7 +5761,7 @@ const aisecTools: ToolDefinition[] = [
         name: 'note_png_fix',
         label: '图片显示异常/打开报错,先怀疑宽高被改',
         spanFull: true,
-        content: '① CTF 常改 IHDR 宽或高使图片显示异常,但 CRC 保持原值' + chr(92) + 'n② 本工具爆破宽×高匹配原始 CRC,单维篡改秒出,双维篡改 ≤4096 也可解' + chr(92) + 'n③ 完好 PNG 会直接告知无需修复',
+        content: '① CTF 常改 IHDR 宽或高使图片显示异常,但 CRC 保持原值\n② 本工具爆破宽×高匹配原始 CRC,单维篡改秒出,双维篡改 ≤4096 也可解\n③ 完好 PNG 会直接告知无需修复',
       },
       { type: 'file', name: 'file', label: 'PNG 文件', accept: '.png,image/png' },
     ],
