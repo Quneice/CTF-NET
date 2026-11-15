@@ -4943,6 +4943,200 @@ const dataShorthandRows: ShorthandRow[] = [
 ];
 
 // ---------------------------------------------------------------------------
+// 三-e、CTF 缺口补充(批 13,ctf-gap-supplement 计划):88 个骨架,全部 placeholder
+// 对照 ctf-* 技能分类法逐域流查:第一轮 144 占位未覆盖的比赛高频项。
+// ---------------------------------------------------------------------------
+const ctfGapShorthandRows: ShorthandRow[] = [
+  // —— Pwn · 栈(5)——
+  { id: 'pwn.stack.checksec', name: '二进制保护检查', categoryId: 'pwn.stack', description: '检测 RELRO/PIE/NX/Canary/RUNPATH 等缓解措施(checksec 思路)', tags: ['Pwn', 'checksec', 'task:识别'], preset: 'file' },
+  { id: 'pwn.stack.ret2dlresolve', name: 'ret2dlresolve', categoryId: 'pwn.stack', description: '无 libc 基址下经动态链接器解析函数(Full RELRO 绕过套路)', tags: ['Pwn', 'dlresolve', 'task:利用'], preset: 'text' },
+  { id: 'pwn.stack.stack-pivot', name: '栈迁移', categoryId: 'pwn.stack', description: 'leave;ret / xchg rax,esp 栈迁移到 BSS/堆(小缓冲区溢出常规解法)', tags: ['Pwn', '栈迁移', 'task:利用'], preset: 'text' },
+  { id: 'pwn.stack.libc-db', name: 'libc 版本识别', categoryId: 'pwn.stack', description: '由泄露地址低 12 位特征匹配 libc 版本(libc-database 思路)', tags: ['Pwn', 'libc', 'task:识别'], preset: 'text' },
+  { id: 'pwn.stack.dynelf', name: 'DynELF 远程符号解析', categoryId: 'pwn.stack', description: '无 libc 文件时经任意读原语远程解析符号地址(pwntools DynELF 思路)', tags: ['Pwn', 'DynELF', 'task:还原'], preset: 'text' },
+  // —— Pwn · 堆(5)——
+  { id: 'pwn.heap.heap-extend', name: '堆溢出基础', categoryId: 'pwn.heap', description: 'chunk extend / off-by-one 空字节覆写等堆溢出基元', tags: ['Pwn', '堆溢出', 'task:利用'], preset: 'text' },
+  { id: 'pwn.heap.houseofeinherjar', name: 'House of Einherjar', categoryId: 'pwn.heap', description: '伪造 prev_size 与 chunk 合并的 Einherjar 攻击', tags: ['Pwn', '堆利用', 'task:利用'], preset: 'text' },
+  { id: 'pwn.heap.houseofapple', name: 'House of Apple 2', categoryId: 'pwn.heap', description: '经 _IO_wfile_jumps 伪造 FILE 结构执行链(House of Apple 2)', tags: ['Pwn', '堆利用', 'task:利用'], preset: 'text' },
+  { id: 'pwn.heap.fsop', name: 'FSOP 文件结构利用', categoryId: 'pwn.heap', description: '_IO_FILE vtable 劫持与 stdout 泄露(FSOP 全家桶)', tags: ['Pwn', 'FSOP', 'task:利用'], preset: 'text' },
+  { id: 'pwn.heap.tcache-stash', name: 'tcache stashing unlink', categoryId: 'pwn.heap', description: 'smallbin 与 tcache 联动取走任意地址的 stashing 攻击', tags: ['Pwn', 'tcache', 'task:利用'], preset: 'text' },
+  // —— Pwn · 内核(3)——
+  { id: 'pwn.kernel.vmlinux-extract', name: '内核镜像提取', categoryId: 'pwn.kernel', description: 'bzImage 解包提取 vmlinux(extract-vmlinux 流程辅助)', tags: ['Pwn', '内核', 'task:提取'], preset: 'file' },
+  { id: 'pwn.kernel.initramfs-unpack', name: 'initramfs 解包/重打包', categoryId: 'pwn.kernel', description: '内核题 cpio 解包、植入 exp、重打包全流程辅助', tags: ['Pwn', '内核', 'task:还原'], preset: 'file' },
+  { id: 'pwn.kernel.kernel-rop', name: '内核 ROP 辅助', categoryId: 'pwn.kernel', description: 'modprobe_path / core_pattern 覆写等内核提权套路生成', tags: ['Pwn', '内核', 'task:利用'], preset: 'text' },
+  // —— Reverse · 静态(3)——
+  { id: 'reverse.static.pyinstaller', name: 'PyInstaller 解包', categoryId: 'reverse.static', description: 'PyInstaller 打包 exe 解包与 pyc 提取(pyinstxtractor 思路)', tags: ['逆向', 'PyInstaller', 'task:还原'], preset: 'file' },
+  { id: 'reverse.static.golang', name: 'Go 二进制分析', categoryId: 'reverse.static', description: 'Go 二进制符号/类型恢复与函数定位(GoReSym 思路)', tags: ['逆向', 'Go', 'task:还原'], preset: 'file' },
+  { id: 'reverse.static.rust', name: 'Rust 二进制分析', categoryId: 'reverse.static', description: 'Rust 二进制 demangle 与错误路径识别辅助', tags: ['逆向', 'Rust', 'task:还原'], preset: 'file' },
+  // —— Reverse · 动态(3)——
+  { id: 'reverse.dynamic.angr', name: 'angr 符号执行', categoryId: 'reverse.dynamic', description: '符号执行自动求解约束路径(angr 思路,适合 flag 校验器)', tags: ['逆向', 'angr', 'task:分析'], preset: 'file' },
+  { id: 'reverse.dynamic.unicorn', name: 'Unicorn 仿真', categoryId: 'reverse.dynamic', description: 'CPU 指令级仿真执行(unicorn 思路,自定义 VM/固件常用)', tags: ['逆向', 'Unicorn', 'task:分析'], preset: 'text' },
+  { id: 'reverse.dynamic.qiling', name: 'Qiling 框架仿真', categoryId: 'reverse.dynamic', description: '跨平台 OS 级仿真(qiling 思路,免环境跑异架构二进制)', tags: ['逆向', 'Qiling', 'task:分析'], preset: 'text' },
+  // —— Reverse · 去混淆(3)——
+  { id: 'reverse.deobfuscate.ollvm', name: 'OLLVM 反混淆', categoryId: 'reverse.deobfuscate', description: 'bcf/fla/sub 混淆识别与还原辅助(D-810 思路)', tags: ['逆向', 'OLLVM', 'task:还原'], preset: 'file' },
+  { id: 'reverse.deobfuscate.z3', name: 'Z3 约束求解', categoryId: 'reverse.deobfuscate', description: '方程组/位运算约束建模与求解(Z3 思路)', tags: ['逆向', 'Z3', 'task:计算'], preset: 'local' },
+  { id: 'reverse.deobfuscate.vmprotect', name: 'VMProtect/Themida 检测', categoryId: 'reverse.deobfuscate', description: '强壳特征识别与脱壳思路提示', tags: ['逆向', '强壳', 'task:识别'], preset: 'file' },
+  // —— Crypto · RSA 补充(5)——
+  { id: 'crypto.modern.rsa.coppersmith', name: 'RSA Coppersmith 攻击', categoryId: 'crypto.modern.rsa', description: '部分泄露素数/消息时的 Coppersmith 小根求解', tags: ['RSA', 'Coppersmith', 'task:攻击'], preset: 'text' },
+  { id: 'crypto.modern.rsa.franklin-reiter', name: 'Franklin-Reiter 相关消息', categoryId: 'crypto.modern.rsa', description: '同模两条线性相关密文的多项式 GCD 恢复明文', tags: ['RSA', '相关消息', 'task:攻击'], preset: 'text' },
+  { id: 'crypto.modern.rsa.bleichenbacher', name: 'Bleichenbacher 填充 Oracle', categoryId: 'crypto.modern.rsa', description: 'PKCS#1 v1.5 填充 oracle 自适应解密(ROBOT)', tags: ['RSA', 'Oracle', 'task:攻击'], preset: 'text' },
+  { id: 'crypto.modern.rsa.multi-prime', name: '多素数 RSA', categoryId: 'crypto.modern.rsa', description: 'n 含多个小素数因子的分解与 CRT 还原', tags: ['RSA', '多素数', 'task:攻击'], preset: 'text' },
+  { id: 'crypto.modern.rsa.rabin', name: 'Rabin 密码系统', categoryId: 'crypto.modern.rsa', description: 'Rabin 平方模 n 解密与 LSB 奇偶 oracle 二分还原', tags: ['Rabin', 'Oracle', 'task:攻击'], preset: 'text' },
+  // —— Crypto · ECC 补充(3)——
+  { id: 'crypto.modern.ecc.smart', name: "Smart's Attack", categoryId: 'crypto.modern.ecc', description: '异常曲线(order=p)的 p-adic 提升秒解 DLP', tags: ['ECC', '异常曲线', 'task:攻击'], preset: 'text' },
+  { id: 'crypto.modern.ecc.pohlig-hellman', name: 'Pohlig-Hellman 光滑阶', categoryId: 'crypto.modern.ecc', description: '阶光滑时的子群 DLP 分解 + CRT 组合', tags: ['ECC', 'Pohlig-Hellman', 'task:攻击'], preset: 'text' },
+  { id: 'crypto.modern.ecc.dsa-nonce', name: 'DSA nonce 复用', categoryId: 'crypto.modern.ecc', description: 'DSA 签名 r 相同泄露私钥的模运算恢复', tags: ['DSA', 'nonce', 'task:攻击'], preset: 'text' },
+  // —— Crypto · DH(2)——
+  { id: 'crypto.modern.dh.small-subgroup', name: 'DH 小群限制攻击', categoryId: 'crypto.modern.dh', description: '小阶子群限制 + 静态密钥逐位恢复(Lim-Lee)', tags: ['DH', '小群', 'task:攻击'], preset: 'text' },
+  { id: 'crypto.modern.dh.smooth-p1', name: 'DH 光滑 p−1 攻击', categoryId: 'crypto.modern.dh', description: 'p−1 光滑时的 Pohlig-Hellman 离散对数求解', tags: ['DH', 'DLP', 'task:攻击'], preset: 'text' },
+  // —— Crypto · 现代补充(9)——
+  { id: 'crypto.modern.mt19937', name: 'MT19937 状态恢复', categoryId: 'crypto.modern', description: '梅森旋转 624 输出反推状态预测后续随机数(randcrack 思路)', tags: ['PRNG', 'MT19937', 'task:攻击'], preset: 'text' },
+  { id: 'crypto.modern.lfsr', name: 'LFSR Berlekamp-Massey', categoryId: 'crypto.modern', description: '由 2n 位输出恢复 LFSR 反馈多项式(BM 算法)', tags: ['LFSR', '流密码', 'task:攻击'], preset: 'text' },
+  { id: 'crypto.modern.gcm-nonce', name: 'AES-GCM nonce 复用', categoryId: 'crypto.modern', description: '同 nonce 的 CTR 密钥流异或 + GHASH 认证密钥恢复(forbidden attack)', tags: ['AES-GCM', 'nonce', 'task:攻击'], preset: 'text' },
+  { id: 'crypto.modern.hnp', name: 'HNP 隐藏数问题', categoryId: 'crypto.modern', description: '部分 nonce 泄露(ECDSA/Schnorr)的格归约恢复私钥', tags: ['格', 'HNP', 'task:攻击'], preset: 'text' },
+  { id: 'crypto.modern.lwe', name: 'LWE/CVP 求解', categoryId: 'crypto.modern', description: 'LWE 实例的 Babai 最近向量嵌入求解', tags: ['格', 'LWE', 'task:攻击'], preset: 'text' },
+  { id: 'crypto.modern.knapsack', name: '背包/子集和格攻击', categoryId: 'crypto.modern', description: '低密度背包与子集和问题的 LLL 归约求解', tags: ['格', '背包', 'task:攻击'], preset: 'text' },
+  { id: 'crypto.modern.shamir', name: 'Shamir 秘密共享恢复', categoryId: 'crypto.modern', description: 'Shamir SSS 份额还原与系数复用漏洞利用', tags: ['SSS', '秘密共享', 'task:还原'], preset: 'text' },
+  { id: 'crypto.modern.fastcoll', name: 'MD5 快速碰撞', categoryId: 'crypto.modern', description: '构造 MD5 同哈希前缀碰撞(fastcoll 思路,PHP 弱比较配合)', tags: ['MD5', '碰撞', 'task:生成'], preset: 'text' },
+  { id: 'crypto.modern.crib-drag', name: 'Many-time pad 拖拽', categoryId: 'crypto.modern', description: '多密文密钥流复用下的 crib dragging 交互恢复明文', tags: ['OTP', 'crib', 'task:分析'], preset: 'local' },
+  // —— Web · XXE(4)——
+  { id: 'web.xxe.basic', name: 'XXE 基础探测', categoryId: 'web.xxe', description: 'XML 外部实体注入探测(file:// 读取/回显判断)', tags: ['XXE', 'XML', 'task:探测'], preset: 'text' },
+  { id: 'web.xxe.oob', name: 'XXE 外带', categoryId: 'web.xxe', description: '无回显 XXE 的 OOB 外带(参数实体 + FTP/HTTP 回连)', tags: ['XXE', 'OOB', 'task:利用'], preset: 'text' },
+  { id: 'web.xxe.dtd', name: 'XXE 本地 DTD', categoryId: 'web.xxe', description: '内置 DTD 文件引用与参数实体组合利用', tags: ['XXE', 'DTD', 'task:利用'], preset: 'text' },
+  { id: 'web.xxe.svg', name: '图片上传 XXE', categoryId: 'web.xxe', description: 'SVG/DOCX 等文件上传场景的 XXE 载荷生成', tags: ['XXE', '上传', 'task:生成'], preset: 'text' },
+  // —— Web · 基础补充(9)——
+  { id: 'web.basic.flask-cookie', name: 'Flask Cookie 伪造', categoryId: 'web.basic', description: 'Flask session 解码与密钥爆破伪造(flask-unsign 思路)', tags: ['Flask', 'Cookie', 'task:爆破'], preset: 'text' },
+  { id: 'web.basic.nosql', name: 'NoSQL 注入', categoryId: 'web.basic', description: 'MongoDB $where/$regex/操作符注入探测', tags: ['NoSQL', 'MongoDB', 'task:探测'], preset: 'text' },
+  { id: 'web.basic.graphql', name: 'GraphQL 注入', categoryId: 'web.basic', description: 'GraphQL 内省查询与批量/别名注入利用', tags: ['GraphQL', 'API', 'task:探测'], preset: 'text' },
+  { id: 'web.basic.smuggling', name: 'HTTP 请求走私', categoryId: 'web.basic', description: 'CL.TE / TE.CL 差异走私探测与利用', tags: ['走私', 'HTTP', 'task:攻击'], preset: 'text' },
+  { id: 'web.basic.crlf', name: 'CRLF 注入', categoryId: 'web.basic', description: '回车换行注入响应头/日志/重定向', tags: ['CRLF', '注入', 'task:攻击'], preset: 'text' },
+  { id: 'web.basic.cache-poison', name: 'Web 缓存投毒', categoryId: 'web.basic', description: '经未键控头污染缓存内容(CPDoS 等)', tags: ['缓存', '投毒', 'task:攻击'], preset: 'text' },
+  { id: 'web.basic.open-redirect', name: '开放重定向', categoryId: 'web.basic', description: '重定向参数滥用检测与利用链构造', tags: ['重定向', '跳转', 'task:探测'], preset: 'text' },
+  { id: 'web.basic.proto-pollution', name: '原型链污染', categoryId: 'web.basic', description: 'JS __proto__ 链污染检测与 gadget 链查找', tags: ['原型污染', 'JS', 'task:攻击'], preset: 'text' },
+  { id: 'web.basic.oauth', name: 'OAuth/OIDC 攻击', categoryId: 'web.basic', description: '授权码劫持/redirect_uri 绕过/state 缺失利用', tags: ['OAuth', 'OIDC', 'task:攻击'], preset: 'text' },
+  // —— Forensics · 内存(2)——
+  { id: 'forensics.memory.lime', name: 'Linux 内存取证', categoryId: 'forensics.memory', description: 'LiME 内存镜像的 Linux 侧分析辅助(进程/模块恢复)', tags: ['内存', 'LiME', 'task:分析'], preset: 'file' },
+  { id: 'forensics.memory.raw-visualize', name: '内存 dump 可视化', categoryId: 'forensics.memory', description: '原始内存镜像按屏幕宽度可视化为图片(GIMP 法)找界面残留', tags: ['内存', '可视化', 'task:分析'], preset: 'file' },
+  // —— Forensics · 磁盘(8)——
+  { id: 'forensics.disk.sam-dump', name: 'SAM/SYSTEM 哈希提取', categoryId: 'forensics.disk', description: 'Windows SAM 注册表提取与 NTLM 哈希计算(secretsdump 思路)', tags: ['SAM', '哈希', 'task:提取'], preset: 'file' },
+  { id: 'forensics.disk.fat-parse', name: 'FAT/exFAT 解析', categoryId: 'forensics.disk', description: 'FAT 表解析、删除文件与未分配簇恢复', tags: ['FAT', '文件系统', 'task:还原'], preset: 'file' },
+  { id: 'forensics.disk.ext-parse', name: 'Ext2/3/4 解析', categoryId: 'forensics.disk', description: 'Ext 文件系统 superblock/inode 解析与孤儿文件恢复', tags: ['Ext', '文件系统', 'task:还原'], preset: 'file' },
+  { id: 'forensics.disk.raid-recover', name: 'RAID 阵列恢复', categoryId: 'forensics.disk', description: 'RAID5 异或重建等磁盘阵列数据恢复', tags: ['RAID', '恢复', 'task:还原'], preset: 'file' },
+  { id: 'forensics.disk.partition-recover', name: '分区恢复', categoryId: 'forensics.disk', description: '删除分区表恢复与挂载(testdisk 思路)', tags: ['分区', '恢复', 'task:还原'], preset: 'file' },
+  { id: 'forensics.disk.browser', name: '浏览器取证', categoryId: 'forensics.disk', description: 'Chrome/Firefox 历史/Cookie/密码库解密(DPAPI 思路)', tags: ['浏览器', '取证', 'task:分析'], preset: 'file' },
+  { id: 'forensics.disk.sqlite', name: 'SQLite 取证分析', categoryId: 'forensics.disk', description: 'SQLite 库结构解析、删除记录与 WAL 恢复', tags: ['SQLite', '取证', 'task:分析'], preset: 'file' },
+  { id: 'forensics.disk.docker', name: 'Docker 镜像取证', categoryId: 'forensics.disk', description: '镜像分层 tar 解析与历史层残留提取', tags: ['Docker', '取证', 'task:分析'], preset: 'file' },
+  // —— Traffic · 解析(2)——
+  { id: 'traffic.parse.tcp-stream', name: 'TCP 流重组导出', categoryId: 'traffic.parse', description: 'PCAP 按 TCP 会话重组并导出传输文件(tshark follow 思路)', tags: ['PCAP', 'TCP', 'task:提取'], preset: 'file' },
+  { id: 'traffic.parse.http-export', name: 'HTTP 对象导出', categoryId: 'traffic.parse', description: '批量导出 HTTP 上传/下载对象(export-objects 思路)', tags: ['PCAP', 'HTTP', 'task:提取'], preset: 'file' },
+  // —— Traffic · 协议(4)——
+  { id: 'traffic.protocol.wpa', name: 'WPA/WEP 破解', categoryId: 'traffic.protocol', description: '握手包提取与 WPA 口令爆破(aircrack 思路)', tags: ['无线', 'WPA', 'task:爆破'], preset: 'file' },
+  { id: 'traffic.protocol.ntlm', name: 'NTLMv2 哈希提取', categoryId: 'traffic.protocol', description: 'PCAP 中 NTLMSSP 挑战/响应提取与 hashcat 格式转换', tags: ['NTLM', '认证', 'task:提取'], preset: 'file' },
+  { id: 'traffic.protocol.dns-tunnel', name: 'DNS 隧道重组', categoryId: 'traffic.protocol', description: 'DNS 子域编码载荷重组(dnscat2 思路)', tags: ['DNS', '隧道', 'task:还原'], preset: 'file' },
+  { id: 'traffic.protocol.serial-bus', name: '硬件总线解码', categoryId: 'traffic.protocol', description: 'UART/I2C 信号波形解码(逻辑分析仪数据)', tags: ['硬件', 'UART', 'task:编解码'], preset: 'file' },
+  // —— Misc · 沙箱逃逸(2)——
+  { id: 'misc.jail.pyjail', name: 'Python 沙箱逃逸辅助', categoryId: 'misc.jail', description: 'pyjail 常用 payload 库与字符限制绕过方案检索', tags: ['pyjail', '沙箱', 'task:利用'], preset: 'text' },
+  { id: 'misc.jail.bashjail', name: 'Bash 受限 Shell 逃逸', categoryId: 'misc.jail', description: 'rbash/受限 shell 逃逸手法速查(HISTFILE/命令替代等)', tags: ['bashjail', 'rbash', 'task:利用'], preset: 'text' },
+  // —— Misc · 其他补充(5)——
+  { id: 'misc.other.sudoku', name: '数独求解器', categoryId: 'misc.other', description: '数独/十六进制数独求解(约束传播)', tags: ['数独', '求解', 'task:计算'], preset: 'local' },
+  { id: 'misc.other.nonogram', name: '数织求解器', categoryId: 'misc.other', description: 'Nonogram 数织谜题求解', tags: ['数织', '求解', 'task:计算'], preset: 'local' },
+  { id: 'misc.other.ctfd', name: 'CTFd 平台导航', categoryId: 'misc.other', description: 'CTFd API 交互辅助(题目列表/提交/hint 拉取)', tags: ['CTFd', '平台', 'task:提取'], preset: 'text' },
+  { id: 'misc.other.gcode', name: '3D 打印 G-code 可视化', categoryId: 'misc.other', description: 'G-code 逐层路径投影成图(隐藏文字还原)', tags: ['G-code', '3D打印', 'task:分析'], preset: 'file' },
+  { id: 'misc.other.barcode-more', name: '扩展条码解码', categoryId: 'misc.other', description: 'Aztec/DataMatrix/MaxiCode 等 QR 之外二维条码解码', tags: ['条码', '解码', 'task:编解码'], preset: 'file' },
+  // —— OSINT(4)——
+  { id: 'osint.wayback', name: 'Wayback CDX 查询', categoryId: 'osint', description: '网页时光机历史快照枚举(CDX API)', tags: ['Wayback', '存档', 'task:探测'], preset: 'text' },
+  { id: 'osint.shodan', name: 'Shodan/Censys 查询', categoryId: 'osint', description: '互联网测绘引擎主机/证书检索', tags: ['Shodan', '测绘', 'task:探测'], preset: 'text' },
+  { id: 'osint.social-api', name: '社交媒体 API 查询', categoryId: 'osint', description: 'X/Bluesky/Discord 公开 API 账号与内容检索', tags: ['社媒', 'API', 'task:提取'], preset: 'text' },
+  { id: 'osint.pluscode', name: 'Plus Code / What3Words', categoryId: 'osint', description: '开放位置编码与三词地址互转', tags: ['位置', '编码', 'task:计算'], preset: 'local' },
+  // —— Blockchain · 合约(4)——
+  { id: 'blockchain.contract.foundry', name: 'Foundry/cast 交互', categoryId: 'blockchain.contract', description: '链上调用/读取/部署的 cast 命令组装', tags: ['Foundry', '链交互', 'task:利用'], preset: 'text' },
+  { id: 'blockchain.contract.flashloan', name: '闪电贷攻击模拟', categoryId: 'blockchain.contract', description: '闪电贷套利/操纵价格攻击链路模拟', tags: ['闪电贷', 'DeFi', 'task:攻击'], preset: 'text' },
+  { id: 'blockchain.contract.selector', name: '函数选择器计算', categoryId: 'blockchain.contract', description: 'ABI 函数签名 keccak256 前 4 字节选择器计算', tags: ['ABI', '选择器', 'task:计算'], preset: 'local' },
+  { id: 'blockchain.contract.reentrancy', name: '重入攻击检测', categoryId: 'blockchain.contract', description: '合约重入漏洞模式检测与利用构造', tags: ['重入', '智能合约', 'task:攻击'], preset: 'text' },
+  // —— Mobile(3)——
+  { id: 'mobile.android.keystore', name: 'Android Keystore 解密', categoryId: 'mobile.android', description: 'Android Keystore 密钥库解密与硬件密钥提取', tags: ['Keystore', 'Android', 'task:提取'], preset: 'file' },
+  { id: 'mobile.android.flutter', name: 'Flutter 逆向', categoryId: 'mobile.android', description: 'Flutter AOT 快照(snapshot)解析与符号恢复', tags: ['Flutter', '逆向', 'task:还原'], preset: 'file' },
+  { id: 'mobile.ios.keychain', name: 'iOS Keychain 提取', categoryId: 'mobile.ios', description: 'iOS Keychain 数据库解析与解密', tags: ['Keychain', 'iOS', 'task:提取'], preset: 'file' },
+];
+
+// ---------------------------------------------------------------------------
+// 三-f、CTF 缺口补充二(批 14,实战攻防取证方向):23 个骨架,全部 placeholder
+// 用户指定方向:webshell 加密流量解密 + 主机取证日志解析;附第三轮流查其余遗漏。
+// ---------------------------------------------------------------------------
+const ctfGap2ShorthandRows: ShorthandRow[] = [
+  // —— Traffic · Webshell 流量(5)——
+  { id: 'traffic.protocol.behinder', name: '冰蝎流量解密', categoryId: 'traffic.protocol', description: '冰蝎 3.x/4.x 流量解密:AES-128(key=md5(pass)[:16],载荷=magic+len+IV+密文),还原命令与回显', tags: ['冰蝎', 'Webshell', 'task:编解码'], preset: 'file' },
+  { id: 'traffic.protocol.antsword', name: '蚁剑流量解码', categoryId: 'traffic.protocol', description: '蚁剑流量还原:base64 载荷 + 自定义 encoder/charset 逆变换,提取命令与结果', tags: ['蚁剑', 'Webshell', 'task:编解码'], preset: 'file' },
+  { id: 'traffic.protocol.godzilla', name: '哥斯拉流量解密', categoryId: 'traffic.protocol', description: '哥斯拉流量还原:XOR+base64 / AES 多加密模式(key=md5(pass)[:16]),按 cryptoType 分支解密', tags: ['哥斯拉', 'Webshell', 'task:编解码'], preset: 'file' },
+  { id: 'traffic.protocol.chopper', name: '菜刀流量解码', categoryId: 'traffic.protocol', description: '菜刀流量还原:POST eval 载荷提取与 base64/hex 解码,分离命令/参数/回显', tags: ['菜刀', 'Webshell', 'task:编解码'], preset: 'file' },
+  { id: 'traffic.protocol.cs-beacon', name: 'Cobalt Strike Beacon 提取', categoryId: 'traffic.protocol', description: 'Beacon 载荷的配置提取与 Malleable 变换逆还原(C2 域名/密钥/任务)', tags: ['CobaltStrike', 'C2', 'task:提取'], preset: 'file' },
+  // —— Traffic · 指纹(1)——
+  { id: 'traffic.fingerprint.webshell-detect', name: 'Webshell 流量识别', categoryId: 'traffic.fingerprint', description: '按请求形态/加密特征识别冰蝎/蚁剑/哥斯拉/菜刀流量并分流到对应解密工具', tags: ['Webshell', '识别', 'task:识别'], preset: 'file' },
+  // —— Traffic · 信号(1)——
+  { id: 'traffic.protocol.rf-iq', name: 'RF/IQ 信号分析', categoryId: 'traffic.protocol', description: 'IQ 数据(cf32/cs16/cu8)载波恢复与 QAM/PSK 解调(SDR 题套路)', tags: ['SDR', 'IQ', 'task:分析'], preset: 'file' },
+  // —— Forensics · 日志深度解析(8)——
+  { id: 'forensics.log.web-access', name: 'Web 访问日志分析', categoryId: 'forensics.log', description: 'Apache/Nginx access.log 解析:状态码/UA/IP 统计、异常请求定位、攻击时间线', tags: ['日志', 'Web', 'task:分析'], preset: 'file' },
+  { id: 'forensics.log.sqli-extract', name: 'SQL 注入日志提取', categoryId: 'forensics.log', description: '从访问日志还原 SQLi:URL/双重编码解码 → UNION SELECT/报错/时间盲注载荷识别 → 注入回显数据列提取拼装', tags: ['日志', 'SQL注入', 'task:提取'], preset: 'file' },
+  { id: 'forensics.log.auth', name: '认证日志分析', categoryId: 'forensics.log', description: 'auth.log/secure 解析:SSH 爆破、登录成败时间线、源 IP 聚合', tags: ['日志', 'SSH', 'task:分析'], preset: 'file' },
+  { id: 'forensics.log.db', name: '数据库日志分析', categoryId: 'forensics.log', description: 'MySQL general log/binlog 解析:注入语句还原、回显数据提取、误删数据恢复线索', tags: ['日志', '数据库', 'task:分析'], preset: 'file' },
+  { id: 'forensics.log.middleware', name: '中间件日志分析', categoryId: 'forensics.log', description: 'Tomcat/WebLogic/Nginx 错误日志解析:异常栈、路径泄露、部署痕迹', tags: ['日志', '中间件', 'task:分析'], preset: 'file' },
+  { id: 'forensics.log.powershell', name: 'PowerShell 历史分析', categoryId: 'forensics.log', description: 'PSReadLine/ConsoleHost_history 解析:命令时间线、可疑编码命令还原', tags: ['日志', 'PowerShell', 'task:分析'], preset: 'file' },
+  { id: 'forensics.log.av', name: '杀软/EDR 日志分析', categoryId: 'forensics.log', description: 'Defender MPLog/EDR 日志解析:告警时间线、威胁检测事件提取', tags: ['日志', 'EDR', 'task:分析'], preset: 'file' },
+  { id: 'forensics.log.app', name: '应用日志分析', categoryId: 'forensics.log', description: '应用 debug/错误日志解析:堆栈泄露、密钥明文、异常路径定位', tags: ['日志', '应用', 'task:分析'], preset: 'file' },
+  // —— Forensics · Windows 持久化(3)——
+  { id: 'forensics.disk.autoruns', name: '启动项分析', categoryId: 'forensics.disk', description: 'Run 键/计划任务/服务启动项提取与可疑项定位(Autoruns 思路)', tags: ['持久化', '启动项', 'task:识别'], preset: 'file' },
+  { id: 'forensics.disk.wmi', name: 'WMI 持久化检测', categoryId: 'forensics.disk', description: 'OBJECTS.DATA 的 WMI 事件订阅解析:FilterToConsumerBinding 可疑消费定位', tags: ['持久化', 'WMI', 'task:分析'], preset: 'file' },
+  { id: 'forensics.disk.recyclebin', name: '回收站分析', categoryId: 'forensics.disk', description: 'Windows 回收站 $I/$R 解析:删除时间与文件恢复', tags: ['回收站', '删除恢复', 'task:还原'], preset: 'file' },
+  // —— Crypto · 补充(2)——
+  { id: 'crypto.modern.groth16', name: 'Groth16 证明伪造', categoryId: 'crypto.modern', description: 'SNARK 题套路:delta==gamma 坏参数检查与 A/B/C 元素伪造', tags: ['ZKP', 'Groth16', 'task:攻击'], preset: 'text' },
+  { id: 'crypto.modern.pqc', name: '后量子密码识别', categoryId: 'crypto.modern', description: 'Kyber/Dilithium/Falcon/NTRU 参数与密文格式识别(ML-KEM q=3329 等特征)', tags: ['PQC', 'Kyber', 'task:识别'], preset: 'text' },
+  // —— Web · 补充(2)——
+  { id: 'web.basic.race', name: '条件竞争攻击', categoryId: 'web.basic', description: 'TOCTOU 竞争:并发请求绕过次数/余额/状态校验(线程/进程竞争)', tags: ['竞争', '并发', 'task:攻击'], preset: 'text' },
+  { id: 'web.basic.source-leak', name: '源码/配置泄露检测', categoryId: 'web.basic', description: '.git/.svn/.env/.DS_Store/备份文件等敏感路径探测', tags: ['泄露', '源码', 'task:探测'], preset: 'text' },
+  // —— Reverse · 补充(1)——
+  { id: 'reverse.static.asar', name: 'Electron ASAR 解包', categoryId: 'reverse.static', description: 'Electron 应用 asar 归档解包与源码恢复', tags: ['Electron', 'ASAR', 'task:提取'], preset: 'file' },
+];
+
+// ---------------------------------------------------------------------------
+// 三-g、渗透测试·木马管理(批 16):20 个骨架,全部 placeholder
+// 用户需求:渗透测试模块新增木马管理功能(冰蝎/蚁剑/哥斯拉/Cobalt Strike/msfvenom 思路)。
+// ---------------------------------------------------------------------------
+const pentestTrojanShorthandRows: ShorthandRow[] = [
+  // —— Webshell 管理(7)——
+  { id: 'pentest.trojan.webshell-mgr', name: 'Webshell 连接管理', categoryId: 'pentest.trojan.webshell', description: '管理已上传 webshell 列表(URL/密码/类型/备注)并做连接测试(冰蝎/蚁剑思路)', tags: ['Webshell', '连接', 'task:利用'], preset: 'text' },
+  { id: 'pentest.trojan.shell-exec', name: '命令执行', categoryId: 'pentest.trojan.webshell', description: '经 webshell 下发系统命令并回收回显', tags: ['Webshell', '执行', 'task:利用'], preset: 'text' },
+  { id: 'pentest.trojan.shell-file', name: '文件管理', categoryId: 'pentest.trojan.webshell', description: '远程文件浏览/上传/下载/编辑/删除', tags: ['Webshell', '文件', 'task:利用'], preset: 'text' },
+  { id: 'pentest.trojan.shell-db', name: '数据库管理', categoryId: 'pentest.trojan.webshell', description: '读取站点数据库配置并执行 SQL(冰蝎数据库管理思路)', tags: ['Webshell', '数据库', 'task:利用'], preset: 'text' },
+  { id: 'pentest.trojan.shell-terminal', name: '虚拟终端', categoryId: 'pentest.trojan.webshell', description: '半交互式虚拟终端(逐命令会话)', tags: ['Webshell', '终端', 'task:利用'], preset: 'text' },
+  { id: 'pentest.trojan.shell-tunnel', name: 'Webshell 隧道', categoryId: 'pentest.trojan.webshell', description: '经 webshell 建立 socks5 内网隧道(冰蝎隧道思路)', tags: ['Webshell', '隧道', 'task:利用'], preset: 'text' },
+  { id: 'pentest.trojan.shell-obfuscate', name: '加密连接协议', categoryId: 'pentest.trojan.webshell', description: '自定义加密/编码连接协议,避开流量特征检测(冰蝎 AES 连接思路)', tags: ['Webshell', '混淆', 'task:利用'], preset: 'text' },
+  // —— 生成与免杀(5)——
+  { id: 'pentest.trojan.ws-gen', name: '一句话木马生成', categoryId: 'pentest.trojan.generate', description: 'PHP/JSP/ASP/ASPX/.NET 一句话木马生成,密码/变量/变形自定义', tags: ['木马', '生成', 'task:生成'], preset: 'text' },
+  { id: 'pentest.trojan.exe-gen', name: 'EXE 载荷生成', categoryId: 'pentest.trojan.generate', description: 'PE 载荷生成与编码(msfvenom 思路:反连/监听/参数自定义)', tags: ['载荷', '生成', 'task:生成'], preset: 'text' },
+  { id: 'pentest.trojan.loader-gen', name: '免杀 Loader 生成', categoryId: 'pentest.trojan.generate', description: '分离加载/进程注入/白加黑 loader 模板生成', tags: ['免杀', 'Loader', 'task:生成'], preset: 'text' },
+  { id: 'pentest.trojan.obfuscator', name: '载荷混淆器', categoryId: 'pentest.trojan.generate', description: '异或/base64/自定义编码多层混淆与加密变形', tags: ['免杀', '混淆', 'task:生成'], preset: 'text' },
+  { id: 'pentest.trojan.av-check', name: '免杀自检', categoryId: 'pentest.trojan.generate', description: '本地杀软扫描 + VirusTotal 在线检测效果自检', tags: ['免杀', '检测', 'task:识别'], preset: 'file' },
+  // —— 监听与会话(4)——
+  { id: 'pentest.trojan.listener', name: '监听器管理', categoryId: 'pentest.trojan.listener', description: 'TCP/HTTP/HTTPS/DNS 监听器创建、启停与状态(Cobalt Strike listener 思路)', tags: ['监听器', 'C2', 'task:利用'], preset: 'text' },
+  { id: 'pentest.trojan.session-mgr', name: '会话管理', categoryId: 'pentest.trojan.listener', description: '上线主机列表、心跳、系统信息与权限采集(Beacon 思路)', tags: ['会话', 'Beacon', 'task:利用'], preset: 'text' },
+  { id: 'pentest.trojan.task-queue', name: '任务下发', categoryId: 'pentest.trojan.listener', description: '批量命令/文件下发与执行结果回收', tags: ['任务', '下发', 'task:利用'], preset: 'text' },
+  { id: 'pentest.trojan.beacon-profile', name: '流量伪装配置', categoryId: 'pentest.trojan.listener', description: '心跳间隔/流量特征/请求形态自定义(Malleable 思路)', tags: ['伪装', '流量', 'task:配置'], preset: 'text' },
+  // —— 检测与痕迹(4)——
+  { id: 'pentest.trojan.ws-detect', name: 'Webshell 检测', categoryId: 'pentest.trojan.detect', description: '本地目录 webshell 特征扫描(YARA/正则/危险函数)', tags: ['查杀', 'Webshell', 'task:扫描'], preset: 'file' },
+  { id: 'pentest.trojan.yara-gen', name: 'YARA 规则生成', categoryId: 'pentest.trojan.detect', description: '从木马样本自动提取特征生成 YARA 规则', tags: ['YARA', '规则', 'task:生成'], preset: 'file' },
+  { id: 'pentest.trojan.trace-clean', name: '痕迹清理', categoryId: 'pentest.trojan.detect', description: '日志/历史命令/上传痕迹的清理与残留检查', tags: ['痕迹', '清理', 'task:攻击'], preset: 'text' },
+  { id: 'pentest.trojan.persistence', name: '持久化植入', categoryId: 'pentest.trojan.detect', description: '计划任务/服务/启动项持久化植入与清单管理', tags: ['持久化', '植入', 'task:攻击'], preset: 'text' },
+];
+
+// ---------------------------------------------------------------------------
+// 三-i、代理拦截工作区(批 17,proxy-repeater 计划):workspace 工具,Go 真实实现
+// ---------------------------------------------------------------------------
+const proxyShorthandRows: ShorthandRow[] = [
+  { id: 'pentest.proxy.intercept', name: '代理拦截', categoryId: 'pentest.proxy', description: 'Burp 风格 HTTP 代理:监听/拦截开关/HTTPS 解密(MITM)/CA 管理/内置浏览器,挂起请求可修改后放行或丢弃', tags: ['代理', '拦截', 'task:利用'], preset: 'text', workspace: 'proxy-interceptor' },
+  { id: 'pentest.proxy.history', name: '流量历史', categoryId: 'pentest.proxy', description: '代理捕获的 HTTP/HTTPS 流量历史:全宽清单浏览,点选查看原始请求/响应,可发送到重放器', tags: ['代理', '历史', 'task:利用'], preset: 'text', workspace: 'proxy-history' },
+  { id: 'pentest.proxy.repeater', name: '重放器', categoryId: 'pentest.proxy', description: '请求重放(Burp Repeater):数字多标签管理请求报文,编辑后重发查看响应', tags: ['代理', '重放', 'task:利用'], preset: 'text', workspace: 'proxy-repeater' },
+];
+
+// ---------------------------------------------------------------------------
 // 四、批量生成 + 导出
 // ---------------------------------------------------------------------------
 
@@ -5025,7 +5219,7 @@ function buildShorthandTool(row: ShorthandRow): ToolDefinition {
   };
 }
 
-const shorthandTools: ToolDefinition[] = [...shorthandRows, ...yangWebShorthandRows, ...cyberChefShorthandRows, ...pentestShorthandRows, ...dataShorthandRows].map(buildShorthandTool);
+const shorthandTools: ToolDefinition[] = [...shorthandRows, ...yangWebShorthandRows, ...cyberChefShorthandRows, ...pentestShorthandRows, ...dataShorthandRows, ...ctfGapShorthandRows, ...ctfGap2ShorthandRows, ...pentestTrojanShorthandRows, ...proxyShorthandRows].map(buildShorthandTool);
 
 // ---------------------------------------------------------------------------
 // 模型安全域（aisec.*）：Go 真实实现工具 + 本地模板速查

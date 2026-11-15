@@ -13,6 +13,9 @@ import FingerprintDbWorkspace from '@/components/fingerdb/FingerprintDbWorkspace
 import RedTeamWikiWorkspace from '@/components/wiki/RedTeamWikiWorkspace';
 import ReverseWikiWorkspace from '@/components/wiki/ReverseWikiWorkspace';
 import ShiftWorkspace from '@/components/tool/ShiftWorkspace';
+import ProxyInterceptWorkspace from '@/components/proxy/ProxyInterceptWorkspace';
+import ProxyHistoryWorkspace from '@/components/proxy/ProxyHistoryWorkspace';
+import ProxyRepeaterWorkspace from '@/components/proxy/ProxyRepeaterWorkspace';
 import StatusBadge from '@/components/tool/StatusBadge';
 import PlaceholderBanner from '@/components/tool/PlaceholderBanner';
 import OutputPanel from '@/components/output/OutputPanel';
@@ -76,8 +79,10 @@ export default function ToolPage({
   ];
   const HeaderIcon = getIcon(tool.icon ?? categoryPath[categoryPath.length - 1]?.icon);
 
-  // 漏洞浏览器：页面头（名称/状态/描述）不显示，工作区即案例全文
-  const bareWorkspace = tool.workspace === 'poc-scan';
+  // 漏洞浏览器/代理三页：页面头（名称/状态/描述/tags）不显示，工作区即页面主体（Burp 风格顶格）
+  const bareWorkspace = ['poc-scan', 'proxy-interceptor', 'proxy-history', 'proxy-repeater'].includes(
+    tool.workspace ?? '',
+  );
 
   return (
     <div className="flex min-h-full flex-col p-6">
@@ -144,6 +149,12 @@ export default function ToolPage({
         <ReverseWikiWorkspace />
       ) : tool.workspace === 'shift' ? (
         <ShiftWorkspace />
+      ) : tool.workspace === 'proxy-interceptor' ? (
+        <ProxyInterceptWorkspace />
+      ) : tool.workspace === 'proxy-history' ? (
+        <ProxyHistoryWorkspace />
+      ) : tool.workspace === 'proxy-repeater' ? (
+        <ProxyRepeaterWorkspace />
       ) : tool.codec ? (
         <CodecWorkspace tool={tool} />
       ) : tool.transform ? (
