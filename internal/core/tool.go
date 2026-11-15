@@ -23,6 +23,7 @@ const (
 	CatBlockchain Category = "blockchain"
 	CatOsint      Category = "osint"
 	CatAI         Category = "ai"
+	CatTraffic    Category = "traffic"
 )
 
 // ParamSpec 工具参数的声明式描述，用于自动校验。

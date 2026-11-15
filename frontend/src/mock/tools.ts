@@ -5695,7 +5695,41 @@ const aisecTools: ToolDefinition[] = [
   { id: 'reverse.static.tool-3', name: '调试器附加', categoryId: 'reverse.static', description: 'x64dbg/IDA 附加配置速查', tags: ['逆向'], version: '1.0.0', inputSchema: [], invoke: { type: 'http', method: 'POST', url: '/api/mock/placeholder', contentType: 'json' } },
   { id: 'reverse.static.idaf5', name: 'IDA F5 脚本', categoryId: 'reverse.static', description: '常用 IDAPython 处理脚本集', tags: ['逆向'], version: '1.0.0', inputSchema: [], invoke: { type: 'http', method: 'POST', url: '/api/mock/placeholder', contentType: 'json' } },
   { id: 'reverse.static.tool-4', name: '注册机编写', categoryId: 'reverse.static', description: '算法还原与 KeyGen 编写流程', tags: ['逆向'], version: '1.0.0', inputSchema: [], invoke: { type: 'http', method: 'POST', url: '/api/mock/placeholder', contentType: 'json' } },
-  { id: 'traffic.protocol.usb', name: 'USB 键盘流量还原', categoryId: 'traffic.protocol', description: 'PCAP 中 HID 键盘数据还原为按键', tags: ['流量'], version: '1.0.0', inputSchema: [], invoke: { type: 'http', method: 'POST', url: '/api/mock/placeholder', contentType: 'json' } },
+  {
+    id: 'traffic.protocol.usb',
+    name: 'USB 键盘流量还原',
+    categoryId: 'traffic.protocol',
+    description:
+      'PCAP 中 USB HID 键盘流量还原:解析 pcap(LINKTYPE_USB_LINUX)提取 HID 报文,'
+      + '按 HID 码表还原按键序列(Shift 大写/符号、Enter/Backspace/空格),flag 正则命中。',
+    tags: ['USB', 'HID', '键盘', '流量', 'pcap'],
+    version: '1.0.0',
+    formColumns: 2,
+    inputSchema: [
+      {
+        type: 'note',
+        name: 'note_usb_kb',
+        label: 'USB 键盘流量还原',
+        spanFull: true,
+        content:
+          '① 输入为 USB 总线抓包的 pcap(linktype 189/220;pcapng 请先转 pcap,非 USB 总线的抓包会明确报错)
+'
+          + '② 自动提取 8 字节 HID 报文(修饰键+键码),去重长按,还原按键文本
+'
+          + '③ Shift 组合键自动映射大写与符号;Backspace 退格、Enter 换行',
+      },
+      { type: 'file', name: 'file', label: 'pcap 文件', accept: '.pcap,application/vnd.tcpdump.pcap' },
+    ],
+    invoke: {
+      type: 'task',
+      submitUrl: '/api/tools/traffic.usb-keyboard/run',
+      pollUrl: '/api/tasks/{jobId}',
+      intervalMs: 1000,
+      timeoutMs: 60000,
+      realBackend: true,
+    },
+    output: { type: 'json' },
+  },
   { id: 'traffic.protocol.usb-2', name: 'USB 鼠标流量还原', categoryId: 'traffic.protocol', description: 'HID 鼠标轨迹还原画图', tags: ['流量'], version: '1.0.0', inputSchema: [], invoke: { type: 'http', method: 'POST', url: '/api/mock/placeholder', contentType: 'json' } },
   { id: 'traffic.protocol.tool', name: '蓝牙流量分析', categoryId: 'traffic.protocol', description: 'HCI/L2CAP 蓝牙协议解析', tags: ['流量'], version: '1.0.0', inputSchema: [], invoke: { type: 'http', method: 'POST', url: '/api/mock/placeholder', contentType: 'json' } },
   { id: 'traffic.protocol.dtmf', name: 'DTMF 解码', categoryId: 'traffic.protocol', description: '双音多频信号还原按键', tags: ['流量'], version: '1.0.0', inputSchema: [], invoke: { type: 'http', method: 'POST', url: '/api/mock/placeholder', contentType: 'json' } },

@@ -9,5 +9,6 @@ import (
 	_ "ctfnet/internal/tools/misc"
 	_ "ctfnet/internal/tools/pentest"
 	_ "ctfnet/internal/tools/reverse"
+	_ "ctfnet/internal/tools/traffic"
 	_ "ctfnet/internal/tools/web"
 )
