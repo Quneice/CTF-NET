@@ -1,1 +1,0 @@
-import{j as r}from"./index-DtaSRMUi.js";import{T as s}from"./TextResult-OOSf0fy8.js";function i({data:t}){const e=typeof t=="string"?t:JSON.stringify(t,null,2);return r.jsx(s,{text:e,filename:"result.txt"})}export{i as default};
