@@ -55,6 +55,21 @@
 
 > ⏳ 项需要 `wails dev` 桌面运行时人工点验;本轮自动化验证(构建/冒烟/静态审查)全绿。
 
-## 5. 提交清单
+## 5. 评审与修复段(全分支新鲜上下文评审后的一次修复)
 
-f80537a store → ee9f1c0 拦截页 → 2148d9c 历史+迷你状态 → 22fb98c 重放器 → 1b3b7fe 接线切换 → 本报告。
+评审结论 1 Critical / 3 Important / 6 Minor;Critical/Important 全部修复(Minor 记录在案顺延):
+
+| 级别 | 发现 | 修复 | 提交 |
+| --- | --- | --- | --- |
+| C1 | 拦截挂起 UI 永远为空:`Record()` 只查 history,而拦截记录**决策后**才入历史,前端事件处理器 `GetRecord` 必然「记录不存在」(批 17 遗留契约断裂,桌面验收一直未跑到) | 后端 `pendingRecs` 快照:挂起注册/决策移除/Stop 清理三处同步,`Record()` history 未命中转查快照;TDD 2 例(单挂起可查 + 3 并发挂起逐一可查)先 RED(`记录不存在`)后 GREEN | 094d555 |
+| I2 | `decide()` 等 `waitRecord` 终态期间新到挂起会被无条件清空 | 按 id 移除(队列过滤),不再整槽清空 | 9cd73d6 |
+| I3 | 单槽 pending vs 后端并发多挂起(页面加载丢挂起) | store 挂起改**队列** `pendings[]`+`pendingRaws{}`(按 id 可编辑),队首处理逐条决策;MiniStatus 显示真实数量 | 9cd73d6 |
+| I1 | HEAD 不自洽:引用了未入库的 proxy.ts/categories/wailsjs 绑定/internal 引擎(**git status 把未跟踪目录折叠成单行,逐文件过滤漏掉了整个 internal/proxy、internal/browser 目录**) | 补齐批次 15-19 未入库源码(MITM 引擎、内置浏览器、两个 App 绑定、app.go 接线、modes/icons/wailsjs/proxy.ts、Chromium 脚本);**干净检出实测验证**:临时 worktree 挂 HEAD → `go build ./...` 0 退出 + `go test ./internal/proxy/ ./internal/browser/` 全过 + 前端 `tsc+vite` 构建成功 | 120add5 |
+
+修复后全仓 `go test ./...`:17 包 ok;唯一失败 `aisec.TestImageAdvZipPath` 为既有环境性失败(依赖桌面真题附件,本批未触碰 aisec)。
+
+Minor 顺延(未修):M1 历史选中行 `bg-brand/10` 无实际 CSS(var 色不支持透明度修饰,沿袭旧代码同类写法);M2 flash 4s 定时器叠加早清;M3 纯浏览器模式下轮询静默 throw-catch;M4 拦截/MITM 开关无 busy 防抖;M5 dev HMR 重载 store 遗留旧定时器(重载页面即愈)。M6(挂起数硬编码)已随 I3 队列化顺带解决。
+
+## 6. 提交清单
+
+f80537a store → ee9f1c0 拦截页 → 2148d9c 历史+迷你状态 → 22fb98c 重放器 → 1b3b7fe 接线切换 → aad72ba 本报告初版 → 094d555/9cd73d6 评审修复 → 120add5 依赖入库 → b0c4cd7 dist 重建。
