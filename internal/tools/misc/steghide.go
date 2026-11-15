@@ -2,7 +2,7 @@ package misc
 
 // misc.steghide:steghide 图片隐写解码(外部 steghide 0.5.1,fscan 同款外挂模式)。
 // 三模式:空密码探测 / 指定密码 / 字典爆破;命中即停,提取内容按类型落盘 artifact。
-// exe 路径在设置页「外部工具路径 → steghide」配置(默认本机 Downloads\steghide\,与 cygwin DLL 同目录)。
+// exe 路径在设置页「外部工具路径 → steghide」配置(默认项目 thirdparty\steghide\,与 cygwin DLL 同目录)。
 // CLI 语义(0.5.1 实测):extract -sf <stego> -p <pass> -xf <out> -f;-p "" 空密码合法;
 // 成功 exit 0 + 生成 out;失败打印 "could not extract any data with that passphrase!"。
 

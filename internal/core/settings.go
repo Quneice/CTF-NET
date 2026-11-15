@@ -141,7 +141,7 @@ func DefaultAppConfig() *AppConfig {
 			Xray:     "xray",
 			Sqlmap:   "sqlmap",
 			Fscan:    `C:\Users\HP\Downloads\fscan_2.2.2_windows_x64.exe`, // 本机 fscan 下载路径，可在设置页改
-			Steghide: `C:\Users\HP\Downloads\steghide\steghide.exe`,       // steghide 0.5.1（同目录 cygwin DLL 一起）,可在设置页改
+			Steghide: `thirdparty\steghide\steghide.exe`,                  // steghide 0.5.1（项目 thirdparty/,同目录 cygwin DLL 一起）,可在设置页改
 		},
 		Executor: ExecutorConfig{
 			DefaultTimeout: 60,
@@ -429,6 +429,23 @@ func ToolPath(name string) string {
 	}
 	if v == "" {
 		return name
+	}
+	// 相对路径解析:先按 cwd,再逐级向上找仓库根(测试 cwd=包目录 / 双击 exe cwd=build/bin / 开发 cwd=根,三者通吃)
+	if !filepath.IsAbs(v) {
+		if _, err := os.Stat(v); err != nil {
+			if cwd, err2 := os.Getwd(); err2 == nil {
+				for d := cwd; ; {
+					if cand := filepath.Join(d, v); func() bool { _, err := os.Stat(cand); return err == nil }() {
+						return cand
+					}
+					parent := filepath.Dir(d)
+					if parent == d {
+						break
+					}
+					d = parent
+				}
+			}
+		}
 	}
 	return v
 }

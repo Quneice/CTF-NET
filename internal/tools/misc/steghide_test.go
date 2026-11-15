@@ -17,7 +17,7 @@ import (
 	"ctfnet/internal/core"
 )
 
-const stegExe = `C:\Users\HP\Downloads\steghide\steghide.exe`
+var stegExe = filepath.Join(`..`, `..`, `..`, `thirdparty`, `steghide`, `steghide.exe`)
 
 func stegSkip(t *testing.T) {
 	t.Helper()
