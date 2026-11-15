@@ -5712,10 +5712,8 @@ const aisecTools: ToolDefinition[] = [
         label: 'USB 键盘流量还原',
         spanFull: true,
         content:
-          '① 输入为 USB 总线抓包的 pcap(linktype 189/220;pcapng 请先转 pcap,非 USB 总线的抓包会明确报错)
-'
-          + '② 自动提取 8 字节 HID 报文(修饰键+键码),去重长按,还原按键文本
-'
+          '① 输入为 USB 总线抓包的 pcap(linktype 189/220;pcapng 请先转 pcap,非 USB 总线的抓包会明确报错)\n'
+          + '② 自动提取 8 字节 HID 报文(修饰键+键码),去重长按,还原按键文本\n'
           + '③ Shift 组合键自动映射大写与符号;Backspace 退格、Enter 换行',
       },
       { type: 'file', name: 'file', label: 'pcap 文件', accept: '.pcap,application/vnd.tcpdump.pcap' },
