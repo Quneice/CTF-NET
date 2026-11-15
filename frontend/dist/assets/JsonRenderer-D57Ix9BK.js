@@ -1,0 +1,1 @@
+import{j as s}from"./index-BKH0OQHH.js";import{T as o,h as r}from"./highlight-CIcraUx6.js";import{T as i}from"./TextResult-q-J9A-nY.js";function f({data:t}){const e=JSON.stringify(t,null,2);return s.jsx(i,{text:e,filename:"result.json",mime:"application/json",render:n=>s.jsx(o,{tokens:r(n)})})}export{f as default};
